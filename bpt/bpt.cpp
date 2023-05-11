@@ -4,8 +4,8 @@
 #include <cstdlib>
 #include <fstream>
 
-const int N=100003,CN=32768;
-template<class T,int B>
+const int N=100003;
+template<class T,int B,int CN=32768>
 class BPT
 {
 public:
