@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/smarthehe/ACM2023/ticket-system/bpt/code.cpp" "CMakeFiles/code.dir/code.cpp.o" "gcc" "CMakeFiles/code.dir/code.cpp.o.d"
+  "/home/smarthehe/ACM2023/ticket-system/bpt/code.cpp" "CMakeFiles/code.dir/bpt/code.cpp.o" "gcc" "CMakeFiles/code.dir/bpt/code.cpp.o.d"
   )
 
 # Targets to which this target links.

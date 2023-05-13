@@ -1,4 +1,4 @@
-CMakeFiles/code.dir/code.cpp.o: \
+CMakeFiles/code.dir/bpt/code.cpp.o: \
  /home/smarthehe/ACM2023/ticket-system/bpt/code.cpp \
  /usr/include/stdc-predef.h \
  /home/smarthehe/ACM2023/ticket-system/bpt/bpt.cpp \

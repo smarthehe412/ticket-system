@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/smarthehe/ACM2023/ticket-system/bpt
+CMAKE_SOURCE_DIR = /home/smarthehe/ACM2023/ticket-system
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/smarthehe/ACM2023/ticket-system/bpt
+CMAKE_BINARY_DIR = /home/smarthehe/ACM2023/ticket-system
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/smarthehe/ACM2023/ticket-system/bpt/CMakeFiles /home/smarthehe/ACM2023/ticket-system/bpt//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/smarthehe/ACM2023/ticket-system/CMakeFiles /home/smarthehe/ACM2023/ticket-system//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/smarthehe/ACM2023/ticket-system/bpt/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/smarthehe/ACM2023/ticket-system/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -129,29 +129,29 @@ code/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/code.dir/build.make CMakeFiles/code.dir/build
 .PHONY : code/fast
 
-code.o: code.cpp.o
-.PHONY : code.o
+bpt/code.o: bpt/code.cpp.o
+.PHONY : bpt/code.o
 
 # target to build an object file
-code.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/code.dir/build.make CMakeFiles/code.dir/code.cpp.o
-.PHONY : code.cpp.o
+bpt/code.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/code.dir/build.make CMakeFiles/code.dir/bpt/code.cpp.o
+.PHONY : bpt/code.cpp.o
 
-code.i: code.cpp.i
-.PHONY : code.i
+bpt/code.i: bpt/code.cpp.i
+.PHONY : bpt/code.i
 
 # target to preprocess a source file
-code.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/code.dir/build.make CMakeFiles/code.dir/code.cpp.i
-.PHONY : code.cpp.i
+bpt/code.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/code.dir/build.make CMakeFiles/code.dir/bpt/code.cpp.i
+.PHONY : bpt/code.cpp.i
 
-code.s: code.cpp.s
-.PHONY : code.s
+bpt/code.s: bpt/code.cpp.s
+.PHONY : bpt/code.s
 
 # target to generate assembly for a file
-code.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/code.dir/build.make CMakeFiles/code.dir/code.cpp.s
-.PHONY : code.cpp.s
+bpt/code.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/code.dir/build.make CMakeFiles/code.dir/bpt/code.cpp.s
+.PHONY : bpt/code.cpp.s
 
 # Help Target
 help:
@@ -162,9 +162,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... code"
-	@echo "... code.o"
-	@echo "... code.i"
-	@echo "... code.s"
+	@echo "... bpt/code.o"
+	@echo "... bpt/code.i"
+	@echo "... bpt/code.s"
 .PHONY : help
 
 

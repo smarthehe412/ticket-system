@@ -1,4 +1,4 @@
-# Install script for directory: /home/smarthehe/ACM2023/ticket-system/bpt
+# Install script for directory: /home/smarthehe/ACM2023/ticket-system
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/smarthehe/ACM2023/ticket-system/bpt/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/smarthehe/ACM2023/ticket-system/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

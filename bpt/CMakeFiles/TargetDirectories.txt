@@ -1,3 +1,0 @@
-/home/smarthehe/ACM2023/ticket-system/bpt/CMakeFiles/code.dir
-/home/smarthehe/ACM2023/ticket-system/bpt/CMakeFiles/edit_cache.dir
-/home/smarthehe/ACM2023/ticket-system/bpt/CMakeFiles/rebuild_cache.dir
