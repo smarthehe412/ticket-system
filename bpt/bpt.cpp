@@ -6,7 +6,7 @@
 #include "vector/vector.hpp"
 
 const int N=100003;
-template<class T,int B,int CN=32768>
+template<class T,int B,int CN=16384>
 class BPT
 {
 public:
