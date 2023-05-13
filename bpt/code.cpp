@@ -50,8 +50,9 @@ int main()
             peo tmp;
             memcpy(tmp.key.name,t,65); 
             sjtu::vector<peo> vec=bpt.get_all(tmp);
-            if(vec.size()==0) {printf("null\n");continue;}
-            for(sjtu::vector<peo>::iterator it=vec.begin();it!=vec.end();it++) printf("%d ",(*it).va);printf("\n");
+            if(vec.size()==0) printf("null");
+            for(sjtu::vector<peo>::iterator it=vec.begin();it!=vec.end();it++) printf("%d ",(*it).va);
+            printf("\n");
         }
         else
         {
