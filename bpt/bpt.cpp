@@ -4,11 +4,13 @@
 #include <cstdlib>
 #include <fstream>
 #include "vector/vector.hpp"
+#include "pair/pair.hpp"
 
 const int N=100003;
-template<class T,int B,int CN=16384>
+template<class KEY,class VALUE,int B,int CN=16384>
 class BPT
 {
+    typedef sjtu::pair<KEY,VALUE> T;
 public:
     int root,ndc;
     std::fstream f1,f2;
@@ -194,7 +196,7 @@ public:
             }
         }
     } cache;
-    node find_leaf(int now,const T &k)
+    node find_leaf(int now,const KEY &k)
     {
         node tmp=cache.query(now);
         if(tmp.cnt==0) return tmp;
@@ -204,7 +206,7 @@ public:
             while(l<=r)
             {
                 int mid=(l+r)>>1;
-                if(k.key<tmp.val[mid].key||k.key==tmp.val[mid].key) r=mid-1,ret=mid;
+                if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
             if(ret==tmp.cnt&&tmp.nxt_leaf) tmp=cache.query(tmp.nxt_leaf);
@@ -214,12 +216,12 @@ public:
         while(l<=r)
         {
             int mid=(l+r)>>1;
-            if(k.key<tmp.val[mid].key||k.key==tmp.val[mid].key) r=mid-1,ret=mid;
+            if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
             else l=mid+1;
         }
         return find_leaf(tmp.son[ret],k);
     }
-    sjtu::vector<T> get_all(const T &k)
+    sjtu::vector<T> get_all(const KEY &k)
     {
         sjtu::vector<T> vec;
         node tmp=find_leaf(root,k);
@@ -228,12 +230,12 @@ public:
         while(l<=r)
         {
             int mid=(l+r)>>1;
-            if(k.key<tmp.val[mid].key||k.key==tmp.val[mid].key) r=mid-1,ret=mid;
+            if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
             else l=mid+1;
         }
         T tt=tmp.val[ret];
-        if(!(k.key==tt.key)) return vec;
-        while(k.key==tt.key)
+        if(!(k==tt.first)) return vec;
+        while(k==tt.first)
         {
             vec.push_back(tt);
             if(ret==tmp.cnt-1)
