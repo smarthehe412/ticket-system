@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
+#include "vector/vector.hpp"
 
 const int N=100003;
 template<class T,int B,int CN=32768>
@@ -218,14 +219,11 @@ public:
         }
         return find_leaf(tmp.son[ret],k);
     }
-    void print_all(const T &k)
+    sjtu::vector<T> get_all(const T &k)
     {
+        sjtu::vector<T> vec;
         node tmp=find_leaf(root,k);
-        if(tmp.cnt==0)
-        {
-            printf("null\n");
-            return;
-        }
+        if(tmp.cnt==0) return vec;
         int l=0,r=tmp.cnt-1,ret=0;
         while(l<=r)
         {
@@ -234,19 +232,19 @@ public:
             else l=mid+1;
         }
         T tt=tmp.val[ret];
-        if(!(k.key==tt.key)) printf("null");
+        if(!(k.key==tt.key)) return vec;
         while(k.key==tt.key)
         {
-            printf("%d ",tt.va);
+            vec.push_back(tt);
             if(ret==tmp.cnt-1)
             {
                 int nx=tmp.nxt_leaf;
-                if(!nx) {printf("\n");return;}
+                if(!nx) return vec;
                 tmp=cache.query(nx);ret=-1;
             }
             tt=tmp.val[++ret];
         }
-        printf("\n");
+        return vec;
     }
     void split_leaf(node &tmp,node &fa,int ret)
     {
