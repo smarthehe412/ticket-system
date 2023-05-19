@@ -171,7 +171,7 @@ void modify_profile()
     if(mailAddr.length()) ret2[0].second.mailAddr=mailAddr;
     if(privilege!=-1) ret2[0].second.privilege=privilege;
     users.insert(ret2[0]);
-    if(!ret3.empty()) login.erase(ret2[0]);
+    if(!ret3.empty()) login.insert(ret2[0]);
     ret2[0].second.print();
     return;
 }
