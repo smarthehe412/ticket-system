@@ -1,10 +1,11 @@
 #include "bpt/bpt.cpp"
-#include "bpt/vector/vector.hpp"
 #include "string.cpp"
 #include <cstring>
 #include <iostream>
 #include <string>
+
 const int SUCCESS=0,FAILED=-1;
+
 class user
 {
 public:
@@ -16,6 +17,7 @@ public:
     user(sjtu::string<20> username,sjtu::string<30> password,sjtu::string<20> name,sjtu::string<30> mailAddr,int privilege):
         username(username),password(password),name(name),mailAddr(mailAddr),privilege(privilege) {}
     void print() {std::cout<<username<<" "<<name<<" "<<mailAddr<<" "<<privilege<<std::endl;}
+    bool operator < (const user &a) const {return username<a.username;}
     bool operator == (const user &a) const {return username==a.username;}
 };
 sjtu::BPT<sjtu::string<20>,user,25,256> users("users_init","users_data");
@@ -32,7 +34,7 @@ std::string get_word()
 }
 char get_key()
 {
-    sjtu::string<30> tmp=get_word();
+    std::string tmp=get_word();
     return tmp[1];
 }
 void add_user()
@@ -53,7 +55,7 @@ void add_user()
             default: std::cout<<FAILED<<std::endl;return;
         }
     }
-    if(users.ndc==1)
+    if(users.empty())
     {
         privilege=10;
         users.insert(psu(username,user(username,password,name,mailAddr,privilege)));
@@ -181,6 +183,8 @@ void clean()
 }
 int main()
 {
+    freopen("test/1.in","r",stdin);
+    freopen("test/1.out","w",stdout);
     std::ios::sync_with_stdio(false);
     sjtu::string<30> timestamp,cmd;
     while(std::getline(std::cin,s))
@@ -188,6 +192,10 @@ int main()
         sp=0;
         timestamp=get_word();
         std::cout<<timestamp<<" ";
+        if(timestamp=="[108]")
+        {
+            int debug=0;
+        }
         cmd=get_word();
         if(cmd=="add_user") add_user();
         else if(cmd=="login") log_in();
@@ -201,6 +209,7 @@ int main()
             login.clear();
             return 0;
         }
+        s.clear();
     }
     return 0;
 }

@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include <fstream>
 #include "vector/vector.hpp"
-#include "pair/pair.hpp"
 
 namespace sjtu
 {
@@ -45,6 +44,11 @@ public:
         tmp.is_leaf=true;
         f2.seekp(sizeof(node));
         f2.write(reinterpret_cast<char*>(&tmp),sizeof(node));
+    }
+    bool empty()
+    {
+        node tmp=cache.query(root);
+        return tmp.cnt==0;
     }
     struct node
     {

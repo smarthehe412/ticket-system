@@ -15,7 +15,7 @@ struct str
     }
 };
 char f1[5]="init",f2[5]="data";
-BPT<str,int,25> bpt(f1,f2);
+sjtu::BPT<str,int,25> bpt(f1,f2);
 char s[65],t[65];
 
 int main()
@@ -29,7 +29,7 @@ int main()
         if(s[0]=='i')
         {
             int va;scanf("%d",&va);
-            bpt.insert(sjtu::make_pair(str(t),va));
+            bpt.insert(sjtu::pair<str,int>(str(t),va));
         }
         else if(s[0]=='f')
         {
@@ -41,7 +41,7 @@ int main()
         else
         {
             int va;scanf("%d",&va); 
-            bpt.erase(sjtu::make_pair(str(t),va));
+            bpt.erase(sjtu::pair<str,int>(str(t),va));
         }
         memset(s,0,65);
         memset(t,0,65);
