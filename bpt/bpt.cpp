@@ -6,11 +6,12 @@
 #include "vector/vector.hpp"
 #include "pair/pair.hpp"
 
-const int N=100003;
-template<class KEY,class VALUE,int B,int CN=16384>
+namespace sjtu
+{
+template<class KEY,class VALUE,int B=25,int CN=16384,int N=100003>
 class BPT
 {
-    typedef sjtu::pair<KEY,VALUE> T;
+    typedef pair<KEY,VALUE> T;
 public:
     int root,ndc;
     std::fstream f1,f2;
@@ -34,6 +35,16 @@ public:
     ~BPT()
     {
         f1<<root<<" "<<ndc;
+    }
+    void clear()
+    {
+        cache.clear();
+        root=1,ndc=1;
+        node tmp;
+        tmp.id=1,tmp.cnt=0;
+        tmp.is_leaf=true;
+        f2.seekp(sizeof(node));
+        f2.write(reinterpret_cast<char*>(&tmp),sizeof(node));
     }
     struct node
     {
@@ -108,6 +119,14 @@ public:
         ~LRU_CACHE()
         {
             for(int i=0;i<CN;i++) if(pos[i]) write_node(pos[i],va[i]);
+        }
+        void clear()
+        {
+            for(int i=0;i<CN;i++) if(pos[i]) write_node(pos[i],va[i]);
+            hashmap=HASH_MAP();
+            for(int i=0;i<CN;i++) va[i]=node(),bf[i]=nx[i]=-1,pos[i]=0;
+            hd=tl=-1;
+            siz=0;
         }
         node read_node(int pos)
         {
@@ -221,9 +240,9 @@ public:
         }
         return find_leaf(tmp.son[ret],k);
     }
-    sjtu::vector<T> get_all(const KEY &k)
+    vector<T> get_all(const KEY &k)
     {
-        sjtu::vector<T> vec;
+        vector<T> vec;
         node tmp=find_leaf(root,k);
         if(tmp.cnt==0) return vec;
         int l=0,r=tmp.cnt-1,ret=0;
@@ -417,7 +436,7 @@ public:
             cache.modify(rt.id,rt);
         }
     }
-    node ins(const T &k,node tmp=node(),node fa=node(),int fret=-1)
+    node insert(const T &k,node tmp=node(),node fa=node(),int fret=-1)
     {
         if(!tmp.id) tmp=cache.query(root);
         if(tmp.is_leaf)
@@ -444,7 +463,7 @@ public:
                 if(k<tmp.val[mid]) r=mid-1,ret=mid;
                 else l=mid+1;
             }
-            tmp=ins(k,cache.query(tmp.son[ret]),tmp,ret);
+            tmp=insert(k,cache.query(tmp.son[ret]),tmp,ret);
             if(tmp.cnt==B+1) split_node(tmp,fa,fret);
             cache.modify(tmp.id,tmp);
         }
@@ -497,3 +516,4 @@ public:
         return fa;
     }
 };
+}

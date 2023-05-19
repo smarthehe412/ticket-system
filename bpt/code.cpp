@@ -29,7 +29,7 @@ int main()
         if(s[0]=='i')
         {
             int va;scanf("%d",&va);
-            bpt.ins(sjtu::make_pair(str(t),va));
+            bpt.insert(sjtu::make_pair(str(t),va));
         }
         else if(s[0]=='f')
         {

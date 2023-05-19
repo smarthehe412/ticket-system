@@ -11,12 +11,11 @@ public:
     T2 second;
     pair(){first=T1();second=T2();}
     pair(T1 key,T2 value): first(key),second(value) {}
-    bool operator < (const pair<T1,T2> a) const
+    bool operator < (const pair<T1,T2> &a) const
     {
-        if(first==a.first) return second<a.second;
         return first<a.first;
     }
-    bool operator == (const pair<T1,T2> a) const
+    bool operator == (const pair<T1,T2> &a) const
     {
         return first==a.first&&second==a.second;
     }
