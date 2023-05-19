@@ -192,10 +192,6 @@ int main()
         sp=0;
         timestamp=get_word();
         std::cout<<timestamp<<" ";
-        if(timestamp=="[108]")
-        {
-            int debug=0;
-        }
         cmd=get_word();
         if(cmd=="add_user") add_user();
         else if(cmd=="login") log_in();
