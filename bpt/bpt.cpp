@@ -2,7 +2,7 @@
 #include <cstring>
 #include <iostream>
 #include <cstdlib>
-#include <fstream>
+#include "filesystem.cpp"
 #include "vector/vector.hpp"
 
 namespace sjtu
@@ -13,43 +13,6 @@ class BPT
     typedef pair<KEY,VALUE> T;
 public:
     int root,ndc;
-    std::fstream f1,f2;
-    BPT(const char *ini,const char *dat): cache(dat)
-    {
-        std::ifstream tf(ini,std::ios::in);
-        f2.open(dat,std::ios::in|std::ios::out|std::ios::binary);
-        if(!tf.good())
-        {
-            std::ofstream of(ini,std::ios::out);
-            root=1,ndc=1;
-            node tmp;
-            tmp.id=1,tmp.cnt=0;
-            tmp.is_leaf=true;
-            f2.seekp(sizeof(node));
-            f2.write(reinterpret_cast<char*>(&tmp),sizeof(node));
-        }
-        else tf>>root>>ndc;
-        f1.open(ini,std::ios::in|std::ios::out);
-    }
-    ~BPT()
-    {
-        f1<<root<<" "<<ndc;
-    }
-    void clear()
-    {
-        cache.clear();
-        root=1,ndc=1;
-        node tmp;
-        tmp.id=1,tmp.cnt=0;
-        tmp.is_leaf=true;
-        f2.seekp(sizeof(node));
-        f2.write(reinterpret_cast<char*>(&tmp),sizeof(node));
-    }
-    bool empty()
-    {
-        node tmp=cache.query(root);
-        return tmp.cnt==0;
-    }
     struct node
     {
         int id,cnt,son[B+2];
@@ -63,6 +26,43 @@ public:
             memset(son,0,sizeof(son));
         }
     };
+    FILE_SYSTEM<int> f1;
+    FILE_SYSTEM<node> f2;
+    BPT(const char *ini,const char *dat): cache(dat),f1(ini),f2(dat)
+    {
+        if(f1.empty())
+        {
+            root=1,ndc=1;
+            node tmp;
+            tmp.id=1,tmp.cnt=0;
+            tmp.is_leaf=true;
+            f2.write(1,tmp);
+        }
+        else
+        {
+            root=f1.read(1);
+            ndc=f1.read(2);
+        }
+    }
+    ~BPT()
+    {
+        f1.write(1,root);
+        f1.write(2,ndc);
+    }
+    void clear()
+    {
+        cache.clear();
+        root=1,ndc=1;
+        node tmp;
+        tmp.id=1,tmp.cnt=0;
+        tmp.is_leaf=true;
+        f2.write(1,tmp);
+    }
+    bool empty()
+    {
+        node tmp=cache.query(root);
+        return tmp.cnt==0;
+    }
     class LRU_CACHE
     {
     public:
@@ -107,14 +107,11 @@ public:
                 return -1;
             }
         } hashmap;
-        std::fstream f;
+        FILE_SYSTEM<node> f;
         node va[CN];
         int hd,tl,siz,bf[CN],nx[CN],pos[CN];
-        LRU_CACHE(const char* dat)
+        LRU_CACHE(const char* dat): f(dat)
         {
-            std::ifstream df(dat,std::ios::in|std::ios::binary);
-            if(!df.good()) std::ofstream of(dat,std::ios::out|std::ios::binary);
-            f.open(dat,std::ios::in|std::ios::out|std::ios::binary);
             hashmap=HASH_MAP();
             for(int i=0;i<CN;i++) va[i]=node(),bf[i]=nx[i]=-1,pos[i]=0;
             hd=tl=-1;
@@ -122,27 +119,15 @@ public:
         }
         ~LRU_CACHE()
         {
-            for(int i=0;i<CN;i++) if(pos[i]) write_node(pos[i],va[i]);
+            for(int i=0;i<CN;i++) if(pos[i]) f.write(pos[i],va[i]);
         }
         void clear()
         {
-            for(int i=0;i<CN;i++) if(pos[i]) write_node(pos[i],va[i]);
+            for(int i=0;i<CN;i++) if(pos[i]) f.write(pos[i],va[i]);
             hashmap=HASH_MAP();
             for(int i=0;i<CN;i++) va[i]=node(),bf[i]=nx[i]=-1,pos[i]=0;
             hd=tl=-1;
             siz=0;
-        }
-        node read_node(int pos)
-        {
-            node tmp;
-            f.seekg(pos*sizeof(node));
-            f.read(reinterpret_cast<char*>(&tmp),sizeof(node));
-            return tmp;
-        }
-        void write_node(int pos,node tmp)
-        {
-            f.seekp(pos*sizeof(node));
-            f.write(reinterpret_cast<char*>(&tmp),sizeof(node));
         }
         node query(int x)
         {
@@ -153,7 +138,7 @@ public:
                 if(siz==CN)
                 {
                     hashmap.del(pos[tl],tl);
-                    write_node(pos[tl],va[tl]);
+                    f.write(pos[tl],va[tl]);
                     now=tl,tl=bf[tl];nx[tl]=-1;
                     bf[hd]=now,nx[now]=hd;
                     bf[now]=-1,hd=now;
@@ -165,7 +150,7 @@ public:
                     else tl=now;
                     hd=now;
                 }
-                pos[now]=x,va[now]=read_node(x);
+                pos[now]=x,va[now]=f.read(x);
                 hashmap.ins(x,now);
                 return va[now];
             }
@@ -189,7 +174,7 @@ public:
                 if(siz==CN)
                 {
                     hashmap.del(pos[tl],tl);
-                    write_node(pos[tl],va[tl]);
+                    f.write(pos[tl],va[tl]);
                     now=tl,tl=bf[tl];nx[tl]=-1;
                     bf[hd]=now,nx[now]=hd;
                     bf[now]=-1,hd=now;
