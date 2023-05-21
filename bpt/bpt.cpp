@@ -227,21 +227,17 @@ public:
             while(l<=r)
             {
                 int mid=(l+r)>>1;
-                if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
+                if(k<tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
-            if(ret==tmp.cnt)
-            {
-                if(tmp.nxt_leaf) return cache.query(tmp.nxt_leaf);
-                else return node();
-            }
+            if(ret==tmp.cnt&&tmp.nxt_leaf) return cache.query(tmp.nxt_leaf);
             return tmp;
         }
         int l=0,r=tmp.cnt-2,ret=tmp.cnt-1;
         while(l<=r)
         {
             int mid=(l+r)>>1;
-            if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
+            if(k<tmp.val[mid].first) r=mid-1,ret=mid;
             else l=mid+1;
         }
         return find_leaf(tmp.son[ret],k);
@@ -254,11 +250,11 @@ public:
         while(l<=r)
         {
             int mid=(l+r)>>1;
-            if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
+            if(k<tmp.val[mid].first) r=mid-1,ret=mid;
             else l=mid+1;
         }
-        if(!(k==tmp.val[ret].first)) return VALUE();
-        return f3.read(tmp.val[ret].second);
+        if(!(ret&&k==tmp.val[ret-1].first)) return VALUE();
+        return f3.read(tmp.val[ret-1].second);
     }
     vector<VALUE> find_range(const KEY &kl,const KEY &kr)
     {
@@ -272,6 +268,7 @@ public:
             if(kl<tmp.val[mid].first||kl==tmp.val[mid].first) r=mid-1,ret=mid;
             else l=mid+1;
         }
+        if(ret==tmp.cnt) return vec;
         KEY tt=tmp.val[ret].first;
         while(tt<kr||tt==kr)
         {
@@ -464,10 +461,10 @@ public:
             while(l<=r)
             {
                 int mid=(l+r)>>1;
-                if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
+                if(k<tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
-            if(ret!=tmp.cnt&&k==tmp.val[ret].first) return fa;
+            if(ret&&k==tmp.val[ret-1].first) return fa;
             memmove(tmp.val+ret+1,tmp.val+ret,(tmp.cnt-ret)*sizeof(T));
             tmp.val[ret]=T(k,++vac),tmp.cnt++;
             f3.write(vac,v);
@@ -480,7 +477,7 @@ public:
             while(l<=r)
             {
                 int mid=(l+r)>>1;
-                if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
+                if(k<tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
             tmp=insert(k,v,cache.query(tmp.son[ret]),tmp,ret);
@@ -498,11 +495,11 @@ public:
             while(l<=r)
             {
                 int mid=(l+r)>>1;
-                if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
+                if(k<tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
-            if(!(ret!=tmp.cnt&&k==tmp.val[ret].first)) return fa;
-            memmove(tmp.val+ret,tmp.val+ret+1,(tmp.cnt-ret-1)*sizeof(T));
+            if(!(ret&&k==tmp.val[ret-1].first)) return fa;
+            memmove(tmp.val+ret-1,tmp.val+ret,(tmp.cnt-ret)*sizeof(T));
             tmp.cnt--;
             if(tmp.id==root)
             {
@@ -518,7 +515,7 @@ public:
             while(l<=r)
             {
                 int mid=(l+r)>>1;
-                if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
+                if(k<tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
             tmp=erase(k,cache.query(tmp.son[ret]),tmp,ret);
