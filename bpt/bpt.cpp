@@ -10,8 +10,9 @@ namespace sjtu
 template<int N>
 struct HASH_MAP
 {
-public:
+private:
     int bg[N],nx[N],id[N],val[N],w[N],ndc,wt;
+public:
     HASH_MAP()
     {
         memset(bg,0,sizeof(bg));
@@ -62,21 +63,22 @@ public:
 template<class T,int CN,int N>
 class LRU_CACHE
 {
-public:
+private:
     HASH_MAP<N> hashmap;
     FILE_SYSTEM<T> f;
     T va[CN];
     int hd,tl,siz,bf[CN],nx[CN],pos[CN];
+    ~LRU_CACHE()
+    {
+        for(int i=0;i<CN;i++) if(pos[i]) f.write(pos[i],va[i]);
+    }
+public:
     LRU_CACHE(const char* dat): f(dat)
     {
         hashmap.clear();
         for(int i=0;i<CN;i++) va[i]=T(),bf[i]=nx[i]=-1,pos[i]=0;
         hd=tl=-1;
         siz=0;
-    }
-    ~LRU_CACHE()
-    {
-        for(int i=0;i<CN;i++) if(pos[i]) f.write(pos[i],va[i]);
     }
     void clear()
     {
@@ -161,11 +163,11 @@ public:
         }
     }
 };
-template<class KEY,class VALUE,int B=25,int CN=16384,int N=100003>
+template<class KEY,class VALUE,int B=25,int CN=8192,int N=100003>
 class BPT
 {
     typedef pair<KEY,int> T;
-public:
+private:
     int root,ndc,vac;
     struct node
     {
@@ -182,8 +184,210 @@ public:
     };
     FILE_SYSTEM<int> f1;
     FILE_SYSTEM<node> f2;
-    FILE_SYSTEM<VALUE> f3;
-    BPT(const char *ini,const char *dat,const char *val): cache(dat),f1(ini),f2(dat),f3(val)
+    LRU_CACHE<node,CN,N> node_cache;
+    LRU_CACHE<VALUE,CN,N> value_cache;
+    ~BPT()
+    {
+        f1.write(1,root);
+        f1.write(2,ndc);
+        f1.write(3,vac);
+    }
+    node find_leaf(int now,const KEY &k)
+    {
+        node tmp=node_cache.query(now);
+        if(tmp.cnt==0) return tmp;
+        if(tmp.is_leaf)
+        {
+            int l=0,r=tmp.cnt-1,ret=tmp.cnt;
+            while(l<=r)
+            {
+                int mid=(l+r)>>1;
+                if(k<tmp.val[mid].first) r=mid-1,ret=mid;
+                else l=mid+1;
+            }
+            if(ret==tmp.cnt&&tmp.nxt_leaf) return node_cache.query(tmp.nxt_leaf);
+            return tmp;
+        }
+        int l=0,r=tmp.cnt-2,ret=tmp.cnt-1;
+        while(l<=r)
+        {
+            int mid=(l+r)>>1;
+            if(k<tmp.val[mid].first) r=mid-1,ret=mid;
+            else l=mid+1;
+        }
+        return find_leaf(tmp.son[ret],k);
+    }
+    void split_leaf(node &tmp,node &fa,int ret)
+    {
+        node oth;
+        tmp.cnt=(B+1)/2;
+        oth.id=++ndc,oth.cnt=B-(B+1)/2;
+        oth.is_leaf=true;
+        oth.bef_leaf=tmp.id,oth.nxt_leaf=tmp.nxt_leaf;
+        if(tmp.nxt_leaf)
+        {
+            node nxt=node_cache.query(tmp.nxt_leaf);
+            nxt.bef_leaf=oth.id;
+            node_cache.modify(nxt.id,nxt);
+        }
+        tmp.nxt_leaf=oth.id;
+        memcpy(oth.val,tmp.val+tmp.cnt,oth.cnt*sizeof(T));
+        if(fa.id==0)
+        {
+            node rt;
+            rt.id=++ndc;rt.cnt=2;
+            rt.son[0]=tmp.id,rt.son[1]=oth.id;
+            rt.val[0]=oth.val[0];
+            root=rt.id;
+            node_cache.modify(oth.id,oth);
+            node_cache.modify(root,rt);
+            return;
+        }
+        memmove(fa.val+ret+1,fa.val+ret,(fa.cnt-ret-1)*sizeof(T));
+        memmove(fa.son+ret+2,fa.son+ret+1,(fa.cnt-ret-1)*sizeof(int));
+        fa.val[ret]=oth.val[0],fa.son[ret+1]=oth.id;
+        fa.cnt++;
+        node_cache.modify(fa.id,fa);
+        node_cache.modify(oth.id,oth);
+    }
+    void split_node(node &tmp,node &fa,int ret)
+    {
+        node oth;
+        tmp.cnt=(B+1)/2;
+        oth.id=++ndc,oth.cnt=B+1-(B+1)/2;
+        memcpy(oth.val,tmp.val+tmp.cnt,(oth.cnt-1)*sizeof(T));
+        memcpy(oth.son,tmp.son+tmp.cnt,oth.cnt*sizeof(int));
+        if(fa.id==0)
+        {
+            node rt;
+            rt.id=++ndc;rt.cnt=2;
+            rt.son[0]=tmp.id,rt.son[1]=oth.id;
+            rt.val[0]=tmp.val[tmp.cnt-1];
+            root=rt.id;
+            node_cache.modify(oth.id,oth);
+            node_cache.modify(root,rt);
+            return;
+        }
+        memmove(fa.val+ret+1,fa.val+ret,(fa.cnt-ret-1)*sizeof(T));
+        memmove(fa.son+ret+2,fa.son+ret+1,(fa.cnt-ret-1)*sizeof(int));
+        fa.val[ret]=tmp.val[tmp.cnt-1],fa.son[ret+1]=oth.id;
+        fa.cnt++;
+        node_cache.modify(fa.id,fa);
+        node_cache.modify(oth.id,oth);
+    }
+    void merge_leaf(node &tmp,node &fa,int ret)
+    {
+        node lf,rt;
+        if(ret) lf=node_cache.query(fa.son[ret-1]);
+        if(ret<fa.cnt-1) rt=node_cache.query(fa.son[ret+1]);
+        if(lf.id&&lf.cnt>B/2)
+        {
+            memmove(tmp.val+1,tmp.val,tmp.cnt*sizeof(T));
+            tmp.val[0]=lf.val[lf.cnt-1];
+            tmp.cnt++,lf.cnt--;
+            fa.val[ret-1]=tmp.val[0];
+            node_cache.modify(fa.id,fa);
+            node_cache.modify(lf.id,lf);
+        }
+        else if(rt.id&&rt.cnt>B/2)
+        {
+            tmp.val[tmp.cnt]=rt.val[0];
+            memmove(rt.val,rt.val+1,(rt.cnt-1)*sizeof(T));
+            tmp.cnt++,rt.cnt--;
+            fa.val[ret]=rt.val[0];
+            node_cache.modify(fa.id,fa);
+            node_cache.modify(rt.id,rt);
+        }
+        else if(lf.id)
+        {
+            memmove(tmp.val+lf.cnt,tmp.val,tmp.cnt*sizeof(T));
+            memcpy(tmp.val,lf.val,lf.cnt*sizeof(T));
+            tmp.cnt+=lf.cnt;
+            tmp.bef_leaf=lf.bef_leaf;
+            if(lf.bef_leaf)
+            {
+                node bef=node_cache.query(lf.bef_leaf);
+                bef.nxt_leaf=tmp.id;
+                node_cache.modify(bef.id,bef);
+            }
+            memmove(fa.val+ret-1,fa.val+ret,(fa.cnt-ret-1)*sizeof(T));
+            memmove(fa.son+ret-1,fa.son+ret,(fa.cnt-ret)*sizeof(int));
+            fa.cnt--;
+            node_cache.modify(fa.id,fa);
+            node_cache.modify(lf.id,lf);
+        }
+        else
+        {
+            memcpy(tmp.val+tmp.cnt,rt.val,rt.cnt*sizeof(T));
+            tmp.cnt+=rt.cnt;
+            tmp.nxt_leaf=rt.nxt_leaf;
+            if(rt.nxt_leaf)
+            {
+                node nxt=node_cache.query(rt.nxt_leaf);
+                nxt.bef_leaf=tmp.id;
+                node_cache.modify(nxt.id,nxt);
+            }
+            memmove(fa.val+ret,fa.val+ret+1,(fa.cnt-ret-2)*sizeof(T));
+            memmove(fa.son+ret+1,fa.son+ret+2,(fa.cnt-ret-2)*sizeof(int));
+            fa.cnt--;
+            node_cache.modify(fa.id,fa);
+            node_cache.modify(rt.id,rt);
+        }
+    }
+    void merge_node(node &tmp,node &fa,int ret)
+    {
+        node lf,rt;
+        if(ret) lf=node_cache.query(fa.son[ret-1]);
+        if(ret<fa.cnt-1) rt=node_cache.query(fa.son[ret+1]);
+        if(lf.id&&lf.cnt>(B+1)/2)
+        {
+            memmove(tmp.val+1,tmp.val,(tmp.cnt-1)*sizeof(T));
+            memmove(tmp.son+1,tmp.son,tmp.cnt*sizeof(int));
+            tmp.val[0]=fa.val[ret-1],tmp.son[0]=lf.son[lf.cnt-1];
+            fa.val[ret-1]=lf.val[lf.cnt-2];
+            tmp.cnt++,lf.cnt--;
+            node_cache.modify(fa.id,fa);
+            node_cache.modify(lf.id,lf);
+        }
+        else if(rt.id&&rt.cnt>(B+1)/2)
+        {
+            tmp.val[tmp.cnt-1]=fa.val[ret],tmp.son[tmp.cnt]=rt.son[0];
+            fa.val[ret]=rt.val[0];
+            memmove(rt.val,rt.val+1,(rt.cnt-2)*sizeof(T));
+            memmove(rt.son,rt.son+1,(rt.cnt-1)*sizeof(int));
+            tmp.cnt++,rt.cnt--;
+            node_cache.modify(fa.id,fa);
+            node_cache.modify(rt.id,rt);
+        }
+        else if(lf.id)
+        {
+            memmove(tmp.val+lf.cnt,tmp.val,(tmp.cnt-1)*sizeof(T));
+            memmove(tmp.son+lf.cnt,tmp.son,tmp.cnt*sizeof(int));
+            memcpy(tmp.val,lf.val,(lf.cnt-1)*sizeof(T));
+            memcpy(tmp.son,lf.son,lf.cnt*sizeof(int));
+            tmp.val[lf.cnt-1]=fa.val[ret-1];
+            tmp.cnt+=lf.cnt;
+            memmove(fa.val+ret-1,fa.val+ret,(fa.cnt-ret-1)*sizeof(T));
+            memmove(fa.son+ret-1,fa.son+ret,(fa.cnt-ret)*sizeof(int));
+            fa.cnt--;
+            node_cache.modify(fa.id,fa);
+            node_cache.modify(lf.id,lf);
+        }
+        else
+        {
+            memcpy(tmp.val+tmp.cnt,rt.val,(rt.cnt-1)*sizeof(T));
+            memcpy(tmp.son+tmp.cnt,rt.son,rt.cnt*sizeof(int));
+            tmp.val[tmp.cnt-1]=fa.val[ret];
+            tmp.cnt+=rt.cnt;
+            memmove(fa.val+ret,fa.val+ret+1,(fa.cnt-ret-2)*sizeof(T));
+            memmove(fa.son+ret+1,fa.son+ret+2,(fa.cnt-ret-2)*sizeof(int));
+            fa.cnt--;
+            node_cache.modify(fa.id,fa);
+            node_cache.modify(rt.id,rt);
+        }
+    }
+public:
+    BPT(const char *ini,const char *dat,const char *val): node_cache(dat),value_cache(val),f1(ini),f2(dat)
     {
         if(f1.empty())
         {
@@ -200,15 +404,10 @@ public:
             vac=f1.read(3);
         }
     }
-    ~BPT()
-    {
-        f1.write(1,root);
-        f1.write(2,ndc);
-        f1.write(3,vac);
-    }
     void clear()
     {
-        cache.clear();
+        node_cache.clear();
+        value_cache.clear();
         root=1,ndc=1,vac=0;
         node tmp;
         tmp.id=1,tmp.cnt=0;
@@ -216,32 +415,6 @@ public:
         f2.write(1,tmp);
     }
     bool empty() {return vac==0;}
-    LRU_CACHE<node,CN,N> cache;
-    node find_leaf(int now,const KEY &k)
-    {
-        node tmp=cache.query(now);
-        if(tmp.cnt==0) return tmp;
-        if(tmp.is_leaf)
-        {
-            int l=0,r=tmp.cnt-1,ret=tmp.cnt;
-            while(l<=r)
-            {
-                int mid=(l+r)>>1;
-                if(k<tmp.val[mid].first) r=mid-1,ret=mid;
-                else l=mid+1;
-            }
-            if(ret==tmp.cnt&&tmp.nxt_leaf) return cache.query(tmp.nxt_leaf);
-            return tmp;
-        }
-        int l=0,r=tmp.cnt-2,ret=tmp.cnt-1;
-        while(l<=r)
-        {
-            int mid=(l+r)>>1;
-            if(k<tmp.val[mid].first) r=mid-1,ret=mid;
-            else l=mid+1;
-        }
-        return find_leaf(tmp.son[ret],k);
-    }
     VALUE query(const KEY &k)
     {
         node tmp=find_leaf(root,k);
@@ -254,7 +427,7 @@ public:
             else l=mid+1;
         }
         if(!(ret&&k==tmp.val[ret-1].first)) return VALUE();
-        return f3.read(tmp.val[ret-1].second);
+        return value_cache.query(tmp.val[ret-1].second);
     }
     vector<VALUE> find_range(const KEY &kl,const KEY &kr)
     {
@@ -272,189 +445,20 @@ public:
         KEY tt=tmp.val[ret].first;
         while(tt<kr||tt==kr)
         {
-            vec.push_back(f3.read(tmp.val[ret].second));
+            vec.push_back(value_cache.query(tmp.val[ret].second));
             if(ret==tmp.cnt-1)
             {
                 int nx=tmp.nxt_leaf;
                 if(!nx) return vec;
-                tmp=cache.query(nx);ret=-1;
+                tmp=node_cache.query(nx);ret=-1;
             }
             tt=tmp.val[++ret].first;
         }
         return vec;
     }
-    void split_leaf(node &tmp,node &fa,int ret)
-    {
-        node oth;
-        tmp.cnt=(B+1)/2;
-        oth.id=++ndc,oth.cnt=B-(B+1)/2;
-        oth.is_leaf=true;
-        oth.bef_leaf=tmp.id,oth.nxt_leaf=tmp.nxt_leaf;
-        if(tmp.nxt_leaf)
-        {
-            node nxt=cache.query(tmp.nxt_leaf);
-            nxt.bef_leaf=oth.id;
-            cache.modify(nxt.id,nxt);
-        }
-        tmp.nxt_leaf=oth.id;
-        memcpy(oth.val,tmp.val+tmp.cnt,oth.cnt*sizeof(T));
-        if(fa.id==0)
-        {
-            node rt;
-            rt.id=++ndc;rt.cnt=2;
-            rt.son[0]=tmp.id,rt.son[1]=oth.id;
-            rt.val[0]=oth.val[0];
-            root=rt.id;
-            cache.modify(oth.id,oth);
-            cache.modify(root,rt);
-            return;
-        }
-        memmove(fa.val+ret+1,fa.val+ret,(fa.cnt-ret-1)*sizeof(T));
-        memmove(fa.son+ret+2,fa.son+ret+1,(fa.cnt-ret-1)*sizeof(int));
-        fa.val[ret]=oth.val[0],fa.son[ret+1]=oth.id;
-        fa.cnt++;
-        cache.modify(fa.id,fa);
-        cache.modify(oth.id,oth);
-    }
-    void split_node(node &tmp,node &fa,int ret)
-    {
-        node oth;
-        tmp.cnt=(B+1)/2;
-        oth.id=++ndc,oth.cnt=B+1-(B+1)/2;
-        memcpy(oth.val,tmp.val+tmp.cnt,(oth.cnt-1)*sizeof(T));
-        memcpy(oth.son,tmp.son+tmp.cnt,oth.cnt*sizeof(int));
-        if(fa.id==0)
-        {
-            node rt;
-            rt.id=++ndc;rt.cnt=2;
-            rt.son[0]=tmp.id,rt.son[1]=oth.id;
-            rt.val[0]=tmp.val[tmp.cnt-1];
-            root=rt.id;
-            cache.modify(oth.id,oth);
-            cache.modify(root,rt);
-            return;
-        }
-        memmove(fa.val+ret+1,fa.val+ret,(fa.cnt-ret-1)*sizeof(T));
-        memmove(fa.son+ret+2,fa.son+ret+1,(fa.cnt-ret-1)*sizeof(int));
-        fa.val[ret]=tmp.val[tmp.cnt-1],fa.son[ret+1]=oth.id;
-        fa.cnt++;
-        cache.modify(fa.id,fa);
-        cache.modify(oth.id,oth);
-    }
-    void merge_leaf(node &tmp,node &fa,int ret)
-    {
-        node lf,rt;
-        if(ret) lf=cache.query(fa.son[ret-1]);
-        if(ret<fa.cnt-1) rt=cache.query(fa.son[ret+1]);
-        if(lf.id&&lf.cnt>B/2)
-        {
-            memmove(tmp.val+1,tmp.val,tmp.cnt*sizeof(T));
-            tmp.val[0]=lf.val[lf.cnt-1];
-            tmp.cnt++,lf.cnt--;
-            fa.val[ret-1]=tmp.val[0];
-            cache.modify(fa.id,fa);
-            cache.modify(lf.id,lf);
-        }
-        else if(rt.id&&rt.cnt>B/2)
-        {
-            tmp.val[tmp.cnt]=rt.val[0];
-            memmove(rt.val,rt.val+1,(rt.cnt-1)*sizeof(T));
-            tmp.cnt++,rt.cnt--;
-            fa.val[ret]=rt.val[0];
-            cache.modify(fa.id,fa);
-            cache.modify(rt.id,rt);
-        }
-        else if(lf.id)
-        {
-            memmove(tmp.val+lf.cnt,tmp.val,tmp.cnt*sizeof(T));
-            memcpy(tmp.val,lf.val,lf.cnt*sizeof(T));
-            tmp.cnt+=lf.cnt;
-            tmp.bef_leaf=lf.bef_leaf;
-            if(lf.bef_leaf)
-            {
-                node bef=cache.query(lf.bef_leaf);
-                bef.nxt_leaf=tmp.id;
-                cache.modify(bef.id,bef);
-            }
-            memmove(fa.val+ret-1,fa.val+ret,(fa.cnt-ret-1)*sizeof(T));
-            memmove(fa.son+ret-1,fa.son+ret,(fa.cnt-ret)*sizeof(int));
-            fa.cnt--;
-            cache.modify(fa.id,fa);
-            cache.modify(lf.id,lf);
-        }
-        else
-        {
-            memcpy(tmp.val+tmp.cnt,rt.val,rt.cnt*sizeof(T));
-            tmp.cnt+=rt.cnt;
-            tmp.nxt_leaf=rt.nxt_leaf;
-            if(rt.nxt_leaf)
-            {
-                node nxt=cache.query(rt.nxt_leaf);
-                nxt.bef_leaf=tmp.id;
-                cache.modify(nxt.id,nxt);
-            }
-            memmove(fa.val+ret,fa.val+ret+1,(fa.cnt-ret-2)*sizeof(T));
-            memmove(fa.son+ret+1,fa.son+ret+2,(fa.cnt-ret-2)*sizeof(int));
-            fa.cnt--;
-            cache.modify(fa.id,fa);
-            cache.modify(rt.id,rt);
-        }
-    }
-    void merge_node(node &tmp,node &fa,int ret)
-    {
-        node lf,rt;
-        if(ret) lf=cache.query(fa.son[ret-1]);
-        if(ret<fa.cnt-1) rt=cache.query(fa.son[ret+1]);
-        if(lf.id&&lf.cnt>(B+1)/2)
-        {
-            memmove(tmp.val+1,tmp.val,(tmp.cnt-1)*sizeof(T));
-            memmove(tmp.son+1,tmp.son,tmp.cnt*sizeof(int));
-            tmp.val[0]=fa.val[ret-1],tmp.son[0]=lf.son[lf.cnt-1];
-            fa.val[ret-1]=lf.val[lf.cnt-2];
-            tmp.cnt++,lf.cnt--;
-            cache.modify(fa.id,fa);
-            cache.modify(lf.id,lf);
-        }
-        else if(rt.id&&rt.cnt>(B+1)/2)
-        {
-            tmp.val[tmp.cnt-1]=fa.val[ret],tmp.son[tmp.cnt]=rt.son[0];
-            fa.val[ret]=rt.val[0];
-            memmove(rt.val,rt.val+1,(rt.cnt-2)*sizeof(T));
-            memmove(rt.son,rt.son+1,(rt.cnt-1)*sizeof(int));
-            tmp.cnt++,rt.cnt--;
-            cache.modify(fa.id,fa);
-            cache.modify(rt.id,rt);
-        }
-        else if(lf.id)
-        {
-            memmove(tmp.val+lf.cnt,tmp.val,(tmp.cnt-1)*sizeof(T));
-            memmove(tmp.son+lf.cnt,tmp.son,tmp.cnt*sizeof(int));
-            memcpy(tmp.val,lf.val,(lf.cnt-1)*sizeof(T));
-            memcpy(tmp.son,lf.son,lf.cnt*sizeof(int));
-            tmp.val[lf.cnt-1]=fa.val[ret-1];
-            tmp.cnt+=lf.cnt;
-            memmove(fa.val+ret-1,fa.val+ret,(fa.cnt-ret-1)*sizeof(T));
-            memmove(fa.son+ret-1,fa.son+ret,(fa.cnt-ret)*sizeof(int));
-            fa.cnt--;
-            cache.modify(fa.id,fa);
-            cache.modify(lf.id,lf);
-        }
-        else
-        {
-            memcpy(tmp.val+tmp.cnt,rt.val,(rt.cnt-1)*sizeof(T));
-            memcpy(tmp.son+tmp.cnt,rt.son,rt.cnt*sizeof(int));
-            tmp.val[tmp.cnt-1]=fa.val[ret];
-            tmp.cnt+=rt.cnt;
-            memmove(fa.val+ret,fa.val+ret+1,(fa.cnt-ret-2)*sizeof(T));
-            memmove(fa.son+ret+1,fa.son+ret+2,(fa.cnt-ret-2)*sizeof(int));
-            fa.cnt--;
-            cache.modify(fa.id,fa);
-            cache.modify(rt.id,rt);
-        }
-    }
     node insert(const KEY &k,const VALUE &v,node tmp=node(),node fa=node(),int fret=-1)
     {
-        if(!tmp.id) tmp=cache.query(root);
+        if(!tmp.id) tmp=node_cache.query(root);
         if(tmp.is_leaf)
         {
             int l=0,r=tmp.cnt-1,ret=tmp.cnt;
@@ -467,9 +471,9 @@ public:
             if(ret&&k==tmp.val[ret-1].first) return fa;
             memmove(tmp.val+ret+1,tmp.val+ret,(tmp.cnt-ret)*sizeof(T));
             tmp.val[ret]=T(k,++vac),tmp.cnt++;
-            f3.write(vac,v);
+            value_cache.modify(vac,v);
             if(tmp.cnt==B) split_leaf(tmp,fa,fret);
-            cache.modify(tmp.id,tmp);
+            node_cache.modify(tmp.id,tmp);
         }
         else
         {
@@ -480,15 +484,15 @@ public:
                 if(k<tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
-            tmp=insert(k,v,cache.query(tmp.son[ret]),tmp,ret);
+            tmp=insert(k,v,node_cache.query(tmp.son[ret]),tmp,ret);
             if(tmp.cnt==B+1) split_node(tmp,fa,fret);
-            cache.modify(tmp.id,tmp);
+            node_cache.modify(tmp.id,tmp);
         }
         return fa;
     }
     node erase(const KEY &k,node tmp=node(),node fa=node(),int fret=-1)
     {
-        if(!tmp.id) tmp=cache.query(root);
+        if(!tmp.id) tmp=node_cache.query(root);
         if(tmp.is_leaf)
         {
             int l=0,r=tmp.cnt-1,ret=tmp.cnt;
@@ -503,11 +507,11 @@ public:
             tmp.cnt--;
             if(tmp.id==root)
             {
-                cache.modify(tmp.id,tmp);
+                node_cache.modify(tmp.id,tmp);
                 return fa;
             }
             if(tmp.cnt<B/2) merge_leaf(tmp,fa,fret);
-            cache.modify(tmp.id,tmp);
+            node_cache.modify(tmp.id,tmp);
         }
         else
         {
@@ -518,7 +522,7 @@ public:
                 if(k<tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
-            tmp=erase(k,cache.query(tmp.son[ret]),tmp,ret);
+            tmp=erase(k,node_cache.query(tmp.son[ret]),tmp,ret);
             if(tmp.id==root)
             {
                 if(tmp.cnt==1) root=tmp.son[0];
@@ -527,7 +531,7 @@ public:
             if(tmp.cnt<(B+1)/2)
             {
                 merge_node(tmp,fa,fret);
-                cache.modify(tmp.id,tmp);
+                node_cache.modify(tmp.id,tmp);
             }
         }
         return fa;
