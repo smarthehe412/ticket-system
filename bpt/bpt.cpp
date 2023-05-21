@@ -197,27 +197,25 @@ public:
         {
             root=f1.read(1);
             ndc=f1.read(2);
+            vac=f1.read(3);
         }
     }
     ~BPT()
     {
         f1.write(1,root);
         f1.write(2,ndc);
+        f1.write(3,vac);
     }
     void clear()
     {
         cache.clear();
-        root=1,ndc=1;
+        root=1,ndc=1,vac=0;
         node tmp;
         tmp.id=1,tmp.cnt=0;
         tmp.is_leaf=true;
         f2.write(1,tmp);
     }
-    bool empty()
-    {
-        node tmp=cache.query(root);
-        return tmp.cnt==0;
-    }
+    bool empty() {return vac==0;}
     LRU_CACHE<node,CN,N> cache;
     node find_leaf(int now,const KEY &k)
     {
@@ -252,7 +250,7 @@ public:
     {
         node tmp=find_leaf(root,k);
         if(tmp.cnt==0) return VALUE();
-        int l=0,r=tmp.cnt-1,ret=0;
+        int l=0,r=tmp.cnt-1,ret=tmp.cnt;
         while(l<=r)
         {
             int mid=(l+r)>>1;

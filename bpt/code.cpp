@@ -41,7 +41,7 @@ int main()
         }
         else if(s[0]=='f')
         {
-            sjtu::vector<int> vec=bpt.find_range(kv(t,-2e9),kv(t,2e9));
+            sjtu::vector<int> vec=bpt.find_range(kv(t,0x80000000),kv(t,0x7fffffff));
             if(vec.size()==0) printf("null");
             for(sjtu::vector<int>::iterator it=vec.begin();it!=vec.end();it++) printf("%d ",*it);
             printf("\n");
