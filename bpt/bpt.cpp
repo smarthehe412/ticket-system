@@ -162,7 +162,7 @@ public:
         }
     }
 };
-template<class KEY,class VALUE,int B=25,int CN=8192,int N=100003>
+template<class KEY,class VALUE,int B=40,int CN=16384,int N=100003>
 class BPT
 {
     typedef pair<KEY,int> T;
