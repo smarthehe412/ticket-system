@@ -68,10 +68,6 @@ private:
     FILE_SYSTEM<T> f;
     T va[CN];
     int hd,tl,siz,bf[CN],nx[CN],pos[CN];
-    ~LRU_CACHE()
-    {
-        for(int i=0;i<CN;i++) if(pos[i]) f.write(pos[i],va[i]);
-    }
 public:
     LRU_CACHE(const char* dat): f(dat)
     {
@@ -79,6 +75,10 @@ public:
         for(int i=0;i<CN;i++) va[i]=T(),bf[i]=nx[i]=-1,pos[i]=0;
         hd=tl=-1;
         siz=0;
+    }
+    ~LRU_CACHE()
+    {
+        for(int i=0;i<CN;i++) if(pos[i]) f.write(pos[i],va[i]);
     }
     void clear()
     {
@@ -186,12 +186,6 @@ private:
     FILE_SYSTEM<node> f2;
     LRU_CACHE<node,CN,N> node_cache;
     LRU_CACHE<VALUE,CN,N> value_cache;
-    ~BPT()
-    {
-        f1.write(1,root);
-        f1.write(2,ndc);
-        f1.write(3,vac);
-    }
     node find_leaf(int now,const KEY &k)
     {
         node tmp=node_cache.query(now);
@@ -403,6 +397,12 @@ public:
             ndc=f1.read(2);
             vac=f1.read(3);
         }
+    }
+    ~BPT()
+    {
+        f1.write(1,root);
+        f1.write(2,ndc);
+        f1.write(3,vac);
     }
     void clear()
     {
