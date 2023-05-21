@@ -1,27 +1,35 @@
 #include "bpt.cpp"
-struct str
+#include <cstring>
+struct kv
 {
     char name[65];
-    str(){memset(name,0,65);}
-    str(char *s){memcpy(name,s,65);}
-    bool operator < (const str &a) const
+    int len,va;
+    kv(){memset(name,0,65);len=va=0;}
+    kv(char *s,int t): va(t)
     {
-        for(int i=0;i<65;i++) if(name[i]!=a.name[i]) return name[i]<a.name[i];
-        return false;
+        memcpy(name,s,65);
+        len=std::strlen(s);
     }
-    bool operator == (const str &a) const
+    bool operator < (const kv &a) const
     {
-        return memcmp(name,a.name,65)==0;
+        int tlen=std::min(len,a.len);
+        for(int i=0;i<tlen;i++) if(name[i]!=a.name[i]) return name[i]<a.name[i];
+        if(len!=a.len) return len<a.len;
+        return va<a.va;
+    }
+    bool operator == (const kv &a) const
+    {
+        if(len!=a.len||va!=a.va) return false;
+        return memcmp(name,a.name,len)==0;
     }
 };
-char f1[5]="init",f2[5]="data";
-sjtu::BPT<str,int,25> bpt(f1,f2);
+sjtu::BPT<kv,int,25> bpt("init","data","value");
 char s[65],t[65];
 
 int main()
 {
-    //freopen("in","r",stdin);
-    //freopen("out","w",stdout);
+    // freopen("in","r",stdin);
+    // freopen("out","w",stdout);
     int n;scanf("%d",&n);
     for(int i=1;i<=n;i++)
     {
@@ -29,22 +37,20 @@ int main()
         if(s[0]=='i')
         {
             int va;scanf("%d",&va);
-            bpt.insert(sjtu::pair<str,int>(str(t),va));
+            bpt.insert(kv(t,va),va);
         }
         else if(s[0]=='f')
         {
-            sjtu::vector<sjtu::pair<str,int>> vec=bpt.get_all(str(t));
+            sjtu::vector<int> vec=bpt.find_range(kv(t,-2e9),kv(t,2e9));
             if(vec.size()==0) printf("null");
-            for(sjtu::vector<sjtu::pair<str,int>>::iterator it=vec.begin();it!=vec.end();it++) printf("%d ",(*it).second);
+            for(sjtu::vector<int>::iterator it=vec.begin();it!=vec.end();it++) printf("%d ",*it);
             printf("\n");
         }
         else
         {
             int va;scanf("%d",&va); 
-            bpt.erase(sjtu::pair<str,int>(str(t),va));
+            bpt.erase(kv(t,va));
         }
-        memset(s,0,65);
-        memset(t,0,65);
     }
     return 0;
 }

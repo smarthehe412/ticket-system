@@ -20,8 +20,8 @@ public:
     bool operator < (const user &a) const {return username<a.username;}
     bool operator == (const user &a) const {return username==a.username;}
 };
-sjtu::BPT<sjtu::string<20>,user,25,256> users("users_init","users_data");
-sjtu::BPT<sjtu::string<20>,user,25,256> login("login_init","login_data");
+sjtu::BPT<sjtu::string<20>,user,25,256> users("users_init","users_data","users_value");
+sjtu::BPT<sjtu::string<20>,user,25,256> login("login_init","login_data","login_value");
 typedef sjtu::pair<sjtu::string<20>,user> psu;
 std::string s;
 int sp;
@@ -58,15 +58,15 @@ void add_user()
     if(users.empty())
     {
         privilege=10;
-        users.insert(psu(username,user(username,password,name,mailAddr,privilege)));
+        users.insert(username,user(username,password,name,mailAddr,privilege));
         std::cout<<SUCCESS<<std::endl;return;
     }
-    sjtu::vector<psu> ret=login.get_all(cur_username);
-    if(ret.empty()) {std::cout<<FAILED<<std::endl;return;}
-    sjtu::vector<psu> ret2=users.get_all(username);
-    if(!ret2.empty()) {std::cout<<FAILED<<std::endl;return;}
-    if(ret[0].second.privilege<=privilege) {std::cout<<FAILED<<std::endl;return;}
-    users.insert(psu(username,user(username,password,name,mailAddr,privilege)));
+    user ret=login.query(cur_username);
+    if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
+    user ret2=users.query(username);
+    if(ret2.privilege!=-1) {std::cout<<FAILED<<std::endl;return;}
+    if(ret.privilege<=privilege) {std::cout<<FAILED<<std::endl;return;}
+    users.insert(username,user(username,password,name,mailAddr,privilege));
     std::cout<<SUCCESS<<std::endl;return;
 }
 void log_in()
@@ -82,12 +82,12 @@ void log_in()
             default: std::cout<<FAILED<<std::endl;return;
         }
     }
-    sjtu::vector<psu> ret=users.get_all(username);
-    if(ret.empty()) {std::cout<<FAILED<<std::endl;return;}
-    if(ret[0].second.password!=password) {std::cout<<FAILED<<std::endl;return;}
-    sjtu::vector<psu> ret2=login.get_all(username);
-    if(!ret2.empty()) {std::cout<<FAILED<<std::endl;return;}
-    login.insert(ret[0]);
+    user ret=users.query(username);
+    if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
+    if(ret.password!=password) {std::cout<<FAILED<<std::endl;return;}
+    user ret2=login.query(username);
+    if(ret2.privilege!=-1) {std::cout<<FAILED<<std::endl;return;}
+    login.insert(username,ret);
     std::cout<<SUCCESS<<std::endl;return;
 }
 void log_out()
@@ -101,9 +101,9 @@ void log_out()
             default: std::cout<<FAILED<<std::endl;return;
         }
     }
-    sjtu::vector<psu> ret=login.get_all(username);
-    if(ret.empty()) {std::cout<<FAILED<<std::endl;return;}
-    login.erase(ret[0]);
+    user ret=login.query(username);
+    if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
+    login.erase(username);
     std::cout<<SUCCESS<<std::endl;return;
 }
 void query_profile()
@@ -118,13 +118,13 @@ void query_profile()
             default: std::cout<<FAILED<<std::endl;return;
         }
     }
-    sjtu::vector<psu> ret=login.get_all(cur_username);
-    if(ret.empty()) {std::cout<<FAILED<<std::endl;return;}
-    if(cur_username==username) {ret[0].second.print();return;}
-    sjtu::vector<psu> ret2=users.get_all(username);
-    if(ret2.empty()) {std::cout<<FAILED<<std::endl;return;}
-    if(ret[0].second.privilege<=ret2[0].second.privilege) {std::cout<<FAILED<<std::endl;return;}
-    ret2[0].second.print();
+    user ret=login.query(cur_username);
+    if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
+    if(cur_username==username) {ret.print();return;}
+    user ret2=users.query(username);
+    if(ret2.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
+    if(ret.privilege<=ret2.privilege) {std::cout<<FAILED<<std::endl;return;}
+    ret2.print();
     return;
 }
 void modify_profile()
@@ -145,34 +145,32 @@ void modify_profile()
             default: std::cout<<FAILED<<std::endl;return;
         }
     }
-    sjtu::vector<psu> ret=login.get_all(cur_username);
-    if(ret.empty()) {std::cout<<FAILED<<std::endl;return;}
-    if(ret[0].second.privilege<=privilege) {std::cout<<FAILED<<std::endl;return;}
+    user ret=login.query(cur_username);
+    if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
+    if(ret.privilege<=privilege) {std::cout<<FAILED<<std::endl;return;}
     if(cur_username==username)
     {
-        users.erase(ret[0]);
-        login.erase(ret[0]);
-        if(password.length()) ret[0].second.password=password;
-        if(name.length()) ret[0].second.name=name;
-        if(mailAddr.length()) ret[0].second.mailAddr=mailAddr;
-        if(privilege!=-1) ret[0].second.privilege=privilege;
-        users.insert(ret[0]);
-        login.insert(ret[0]);
+        users.erase(username);
+        login.erase(username);
+        if(password.length()) ret.password=password;
+        if(name.length()) ret.name=name;
+        if(mailAddr.length()) ret.mailAddr=mailAddr;
+        if(privilege!=-1) ret.privilege=privilege;
+        users.insert(username,ret);
+        login.insert(username,ret);
         return;
     }
-    sjtu::vector<psu> ret2=users.get_all(username);
-    if(ret2.empty()) {std::cout<<FAILED<<std::endl;return;}
-    if(ret[0].second.privilege<=ret2[0].second.privilege) {std::cout<<FAILED<<std::endl;return;}
-    sjtu::vector<psu> ret3=login.get_all(username);
-    users.erase(ret2[0]);
-    if(!ret3.empty()) login.erase(ret2[0]);
-    if(password.length()) ret2[0].second.password=password;
-    if(name.length()) ret2[0].second.name=name;
-    if(mailAddr.length()) ret2[0].second.mailAddr=mailAddr;
-    if(privilege!=-1) ret2[0].second.privilege=privilege;
-    users.insert(ret2[0]);
-    if(!ret3.empty()) login.insert(ret2[0]);
-    ret2[0].second.print();
+    user ret2=users.query(username);
+    if(ret2.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
+    if(ret.privilege<=ret2.privilege) {std::cout<<FAILED<<std::endl;return;}
+    if(password.length()) ret2.password=password;
+    if(name.length()) ret2.name=name;
+    if(mailAddr.length()) ret2.mailAddr=mailAddr;
+    if(privilege!=-1) ret2.privilege=privilege;
+    user ret3=login.query(username);
+    users.erase(username),users.insert(username,ret2);
+    if(ret3.privilege!=-1) login.erase(username),login.insert(username,ret2);
+    ret2.print();
     return;
 }
 void clean()

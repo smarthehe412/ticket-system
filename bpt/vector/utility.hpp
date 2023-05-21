@@ -26,11 +26,6 @@ public:
 		first=a.first,second=a.second;
 		return *this;
 	}
-	bool operator < (const pair &a) const
-	{
-		if(first==a.first) return second<a.second;
-		return first<a.first;
-	}
 	bool operator == (const pair &a) const
 	{
 		return first==a.first&&second==a.second;

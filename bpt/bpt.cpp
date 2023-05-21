@@ -7,12 +7,166 @@
 
 namespace sjtu
 {
+template<int N>
+struct HASH_MAP
+{
+public:
+    int bg[N],nx[N],id[N],val[N],w[N],ndc,wt;
+    HASH_MAP()
+    {
+        memset(bg,0,sizeof(bg));
+        memset(nx,0,sizeof(nx));
+        memset(id,0,sizeof(id));
+        memset(val,0,sizeof(val));
+        memset(w,0,sizeof(w));
+        ndc=wt=0;
+    }
+    void clear()
+    {
+        memset(bg,0,sizeof(bg));
+        memset(nx,0,sizeof(nx));
+        memset(id,0,sizeof(id));
+        memset(val,0,sizeof(val));
+        memset(w,0,sizeof(w));
+        ndc=wt=0;
+    }
+    void ins(int x,int v)
+    {
+        int tmp=x%N;
+        int now=wt?w[wt--]:++ndc;
+        nx[now]=bg[tmp];bg[tmp]=now;
+        id[now]=x,val[now]=v;
+    }
+    void del(int x,int y)
+    {
+        int tmp=x%N,las=0;
+        for(int i=bg[tmp];i;i=nx[i])
+        {
+            if(id[i]==x&&val[i]==y)
+            {
+                if(las) nx[las]=nx[i];
+                else bg[tmp]=nx[i];
+                w[++wt]=i;
+                return;
+            }
+            las=i;
+        }
+    }
+    int query(int x)
+    {
+        int tmp=x%N;
+        for(int i=bg[tmp];i;i=nx[i]) if(id[i]==x) return val[i];
+        return -1;
+    }
+};
+template<class T,int CN,int N>
+class LRU_CACHE
+{
+public:
+    HASH_MAP<N> hashmap;
+    FILE_SYSTEM<T> f;
+    T va[CN];
+    int hd,tl,siz,bf[CN],nx[CN],pos[CN];
+    LRU_CACHE(const char* dat): f(dat)
+    {
+        hashmap.clear();
+        for(int i=0;i<CN;i++) va[i]=T(),bf[i]=nx[i]=-1,pos[i]=0;
+        hd=tl=-1;
+        siz=0;
+    }
+    ~LRU_CACHE()
+    {
+        for(int i=0;i<CN;i++) if(pos[i]) f.write(pos[i],va[i]);
+    }
+    void clear()
+    {
+        for(int i=0;i<CN;i++) if(pos[i]) f.write(pos[i],va[i]);
+        hashmap.clear();
+        for(int i=0;i<CN;i++) va[i]=T(),bf[i]=nx[i]=-1,pos[i]=0;
+        hd=tl=-1;
+        siz=0;
+    }
+    T query(int x)
+    {
+        int tx=hashmap.query(x);
+        if(tx==-1)
+        {
+            int now;
+            if(siz==CN)
+            {
+                hashmap.del(pos[tl],tl);
+                f.write(pos[tl],va[tl]);
+                now=tl,tl=bf[tl];nx[tl]=-1;
+                bf[hd]=now,nx[now]=hd;
+                bf[now]=-1,hd=now;
+            }
+            else
+            {
+                now=siz++;
+                if(~hd) bf[hd]=now,nx[now]=hd;
+                else tl=now;
+                hd=now;
+            }
+            pos[now]=x,va[now]=f.read(x);
+            hashmap.ins(x,now);
+            return va[now];
+        }
+        else
+        {
+            if(tx==hd) return va[tx]; 
+            if(~bf[tx]) nx[bf[tx]]=nx[tx];
+            if(~nx[tx]) bf[nx[tx]]=bf[tx];
+            if(tx==tl) tl=bf[tx];
+            bf[tx]=-1,nx[tx]=hd;
+            bf[hd]=tx,hd=tx;
+            return va[tx];
+        }
+    }
+    void modify(int x,T tmp)
+    {
+        int tx=hashmap.query(x);
+        if(tx==-1)
+        {
+            int now;
+            if(siz==CN)
+            {
+                hashmap.del(pos[tl],tl);
+                f.write(pos[tl],va[tl]);
+                now=tl,tl=bf[tl];nx[tl]=-1;
+                bf[hd]=now,nx[now]=hd;
+                bf[now]=-1,hd=now;
+            }
+            else
+            {
+                now=siz++;
+                if(~hd) bf[hd]=now,nx[now]=hd;
+                else tl=now;
+                hd=now;
+            }
+            pos[now]=x,va[now]=tmp;
+            hashmap.ins(x,now);
+        }
+        else
+        {
+            if(tx==hd)
+            {
+                va[tx]=tmp;
+                return;
+            }
+            if(~bf[tx]) nx[bf[tx]]=nx[tx];
+            if(~nx[tx]) bf[nx[tx]]=bf[tx];
+            if(tx==tl) tl=bf[tx];
+            bf[tx]=-1,nx[tx]=hd,va[tx]=tmp;
+            bf[hd]=tx,hd=tx;
+        }
+    }
+};
 template<class KEY,class VALUE,int B=25,int CN=16384,int N=100003>
 class BPT
 {
-    typedef pair<KEY,VALUE> T;
+    typedef pair<KEY,int> T;
 public:
-    int root,ndc;
+    int root,ndc,vac;
     struct node
     {
         int id,cnt,son[B+2];
@@ -21,18 +175,19 @@ public:
         node()
         {
             id=cnt=0;
-            is_leaf=false;bef_leaf=nxt_leaf=0;
-            for(int i=0;i<=B;i++) val[i]=T();
+            is_leaf=false,bef_leaf=nxt_leaf=0;
+            for(int i=0;i<=B+1;i++) val[i]=T();
             memset(son,0,sizeof(son));
         }
     };
     FILE_SYSTEM<int> f1;
     FILE_SYSTEM<node> f2;
-    BPT(const char *ini,const char *dat): cache(dat),f1(ini),f2(dat)
+    FILE_SYSTEM<VALUE> f3;
+    BPT(const char *ini,const char *dat,const char *val): cache(dat),f1(ini),f2(dat),f3(val)
     {
         if(f1.empty())
         {
-            root=1,ndc=1;
+            root=1,ndc=1,vac=0;
             node tmp;
             tmp.id=1,tmp.cnt=0;
             tmp.is_leaf=true;
@@ -63,147 +218,7 @@ public:
         node tmp=cache.query(root);
         return tmp.cnt==0;
     }
-    class LRU_CACHE
-    {
-    public:
-        struct HASH_MAP
-        {
-            int bg[N],nx[N],id[N],val[N],w[N],ndc,wt;
-            HASH_MAP()
-            {
-                memset(bg,0,sizeof(bg));
-                memset(nx,0,sizeof(nx));
-                memset(id,0,sizeof(id));
-                memset(val,0,sizeof(val));
-                memset(w,0,sizeof(w));
-                ndc=wt=0;
-            }
-            void ins(int x,int v)
-            {
-                int tmp=x%N;
-                int now=wt?w[wt--]:++ndc;
-                nx[now]=bg[tmp];bg[tmp]=now;
-                id[now]=x,val[now]=v;
-            }
-            void del(int x,int y)
-            {
-                int tmp=x%N,las=0;
-                for(int i=bg[tmp];i;i=nx[i])
-                {
-                    if(id[i]==x&&val[i]==y)
-                    {
-                        if(las) nx[las]=nx[i];
-                        else bg[tmp]=nx[i];
-                        w[++wt]=i;
-                        return;
-                    }
-                    las=i;
-                }
-            }
-            int query(int x)
-            {
-                int tmp=x%N;
-                for(int i=bg[tmp];i;i=nx[i]) if(id[i]==x) return val[i];
-                return -1;
-            }
-        } hashmap;
-        FILE_SYSTEM<node> f;
-        node va[CN];
-        int hd,tl,siz,bf[CN],nx[CN],pos[CN];
-        LRU_CACHE(const char* dat): f(dat)
-        {
-            hashmap=HASH_MAP();
-            for(int i=0;i<CN;i++) va[i]=node(),bf[i]=nx[i]=-1,pos[i]=0;
-            hd=tl=-1;
-            siz=0;
-        }
-        ~LRU_CACHE()
-        {
-            for(int i=0;i<CN;i++) if(pos[i]) f.write(pos[i],va[i]);
-        }
-        void clear()
-        {
-            for(int i=0;i<CN;i++) if(pos[i]) f.write(pos[i],va[i]);
-            hashmap=HASH_MAP();
-            for(int i=0;i<CN;i++) va[i]=node(),bf[i]=nx[i]=-1,pos[i]=0;
-            hd=tl=-1;
-            siz=0;
-        }
-        node query(int x)
-        {
-            int tx=hashmap.query(x);
-            if(tx==-1)
-            {
-                int now;
-                if(siz==CN)
-                {
-                    hashmap.del(pos[tl],tl);
-                    f.write(pos[tl],va[tl]);
-                    now=tl,tl=bf[tl];nx[tl]=-1;
-                    bf[hd]=now,nx[now]=hd;
-                    bf[now]=-1,hd=now;
-                }
-                else
-                {
-                    now=siz++;
-                    if(~hd) bf[hd]=now,nx[now]=hd;
-                    else tl=now;
-                    hd=now;
-                }
-                pos[now]=x,va[now]=f.read(x);
-                hashmap.ins(x,now);
-                return va[now];
-            }
-            else
-            {
-                if(tx==hd) return va[tx]; 
-                if(~bf[tx]) nx[bf[tx]]=nx[tx];
-                if(~nx[tx]) bf[nx[tx]]=bf[tx];
-                if(tx==tl) tl=bf[tx];
-                bf[tx]=-1,nx[tx]=hd;
-                bf[hd]=tx,hd=tx;
-                return va[tx];
-            }
-        }
-        void modify(int x,node tmp)
-        {
-            int tx=hashmap.query(x);
-            if(tx==-1)
-            {
-                int now;
-                if(siz==CN)
-                {
-                    hashmap.del(pos[tl],tl);
-                    f.write(pos[tl],va[tl]);
-                    now=tl,tl=bf[tl];nx[tl]=-1;
-                    bf[hd]=now,nx[now]=hd;
-                    bf[now]=-1,hd=now;
-                }
-                else
-                {
-                    now=siz++;
-                    if(~hd) bf[hd]=now,nx[now]=hd;
-                    else tl=now;
-                    hd=now;
-                }
-                pos[now]=x,va[now]=tmp;
-                hashmap.ins(x,now);
-            }
-            else
-            {
-                if(tx==hd)
-                {
-                    va[tx]=tmp;
-                    return;
-                }
-                if(~bf[tx]) nx[bf[tx]]=nx[tx];
-                if(~nx[tx]) bf[nx[tx]]=bf[tx];
-                if(tx==tl) tl=bf[tx];
-                bf[tx]=-1,nx[tx]=hd,va[tx]=tmp;
-                bf[hd]=tx,hd=tx;
-            }
-        }
-    } cache;
+    LRU_CACHE<node,CN,N> cache;
     node find_leaf(int now,const KEY &k)
     {
         node tmp=cache.query(now);
@@ -217,7 +232,11 @@ public:
                 if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
-            if(ret==tmp.cnt&&tmp.nxt_leaf) tmp=cache.query(tmp.nxt_leaf);
+            if(ret==tmp.cnt)
+            {
+                if(tmp.nxt_leaf) return cache.query(tmp.nxt_leaf);
+                else return node();
+            }
             return tmp;
         }
         int l=0,r=tmp.cnt-2,ret=tmp.cnt-1;
@@ -229,11 +248,10 @@ public:
         }
         return find_leaf(tmp.son[ret],k);
     }
-    vector<T> get_all(const KEY &k)
+    VALUE query(const KEY &k)
     {
-        vector<T> vec;
         node tmp=find_leaf(root,k);
-        if(tmp.cnt==0) return vec;
+        if(tmp.cnt==0) return VALUE();
         int l=0,r=tmp.cnt-1,ret=0;
         while(l<=r)
         {
@@ -241,18 +259,32 @@ public:
             if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
             else l=mid+1;
         }
-        T tt=tmp.val[ret];
-        if(!(k==tt.first)) return vec;
-        while(k==tt.first)
+        if(!(k==tmp.val[ret].first)) return VALUE();
+        return f3.read(tmp.val[ret].second);
+    }
+    vector<VALUE> find_range(const KEY &kl,const KEY &kr)
+    {
+        vector<VALUE> vec;
+        node tmp=find_leaf(root,kl);
+        if(tmp.cnt==0) return vec;
+        int l=0,r=tmp.cnt-1,ret=tmp.cnt;
+        while(l<=r)
         {
-            vec.push_back(tt);
+            int mid=(l+r)>>1;
+            if(kl<tmp.val[mid].first||kl==tmp.val[mid].first) r=mid-1,ret=mid;
+            else l=mid+1;
+        }
+        KEY tt=tmp.val[ret].first;
+        while(tt<kr||tt==kr)
+        {
+            vec.push_back(f3.read(tmp.val[ret].second));
             if(ret==tmp.cnt-1)
             {
                 int nx=tmp.nxt_leaf;
                 if(!nx) return vec;
                 tmp=cache.query(nx);ret=-1;
             }
-            tt=tmp.val[++ret];
+            tt=tmp.val[++ret].first;
         }
         return vec;
     }
@@ -425,7 +457,7 @@ public:
             cache.modify(rt.id,rt);
         }
     }
-    node insert(const T &k,node tmp=node(),node fa=node(),int fret=-1)
+    node insert(const KEY &k,const VALUE &v,node tmp=node(),node fa=node(),int fret=-1)
     {
         if(!tmp.id) tmp=cache.query(root);
         if(tmp.is_leaf)
@@ -434,12 +466,13 @@ public:
             while(l<=r)
             {
                 int mid=(l+r)>>1;
-                if(k<tmp.val[mid]) r=mid-1,ret=mid;
+                if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
-            if(ret&&k==tmp.val[ret-1]) return fa;
+            if(ret!=tmp.cnt&&k==tmp.val[ret].first) return fa;
             memmove(tmp.val+ret+1,tmp.val+ret,(tmp.cnt-ret)*sizeof(T));
-            tmp.val[ret]=k,tmp.cnt++;
+            tmp.val[ret]=T(k,++vac),tmp.cnt++;
+            f3.write(vac,v);
             if(tmp.cnt==B) split_leaf(tmp,fa,fret);
             cache.modify(tmp.id,tmp);
         }
@@ -449,16 +482,16 @@ public:
             while(l<=r)
             {
                 int mid=(l+r)>>1;
-                if(k<tmp.val[mid]) r=mid-1,ret=mid;
+                if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
-            tmp=insert(k,cache.query(tmp.son[ret]),tmp,ret);
+            tmp=insert(k,v,cache.query(tmp.son[ret]),tmp,ret);
             if(tmp.cnt==B+1) split_node(tmp,fa,fret);
             cache.modify(tmp.id,tmp);
         }
         return fa;
     }
-    node erase(const T &k,node tmp=node(),node fa=node(),int fret=-1)
+    node erase(const KEY &k,node tmp=node(),node fa=node(),int fret=-1)
     {
         if(!tmp.id) tmp=cache.query(root);
         if(tmp.is_leaf)
@@ -467,11 +500,11 @@ public:
             while(l<=r)
             {
                 int mid=(l+r)>>1;
-                if(k<tmp.val[mid]) r=mid-1,ret=mid;
+                if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
-            if(!(ret&&k==tmp.val[ret-1])) return fa;
-            memmove(tmp.val+ret-1,tmp.val+ret,(tmp.cnt-ret)*sizeof(T));
+            if(!(ret!=tmp.cnt&&k==tmp.val[ret].first)) return fa;
+            memmove(tmp.val+ret,tmp.val+ret+1,(tmp.cnt-ret-1)*sizeof(T));
             tmp.cnt--;
             if(tmp.id==root)
             {
@@ -487,7 +520,7 @@ public:
             while(l<=r)
             {
                 int mid=(l+r)>>1;
-                if(k<tmp.val[mid]) r=mid-1,ret=mid;
+                if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
             tmp=erase(k,cache.query(tmp.son[ret]),tmp,ret);
