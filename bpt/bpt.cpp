@@ -428,33 +428,34 @@ public:
         return f3.read(tmp.val[ret-1].second);
     }
     //find_range only works when use KEY=pair<REAL_KEY,VALUE> to get a multiBPT
-    vector<VALUE> find_range(const KEY &kl,const KEY &kr)
-    {
-        vector<VALUE> vec;
-        node tmp=find_leaf(root,kl);
-        if(tmp.cnt==0) return vec;
-        int l=0,r=tmp.cnt-1,ret=tmp.cnt;
-        while(l<=r)
-        {
-            int mid=(l+r)>>1;
-            if(kl<tmp.val[mid].first||kl==tmp.val[mid].first) r=mid-1,ret=mid;
-            else l=mid+1;
-        }
-        if(ret==tmp.cnt) return vec;
-        KEY tt=tmp.val[ret].first;
-        while(tt<kr||tt==kr)
-        {
-            vec.push_back(tt.va);
-            if(ret==tmp.cnt-1)
-            {
-                int nx=tmp.nxt_leaf;
-                if(!nx) return vec;
-                tmp=node_cache.query(nx);ret=-1;
-            }
-            tt=tmp.val[++ret].first;
-        }
-        return vec;
-    }
+    //a.k.a only works on TEST
+    // vector<VALUE> find_range(const KEY &kl,const KEY &kr)
+    // {
+    //     vector<VALUE> vec;
+    //     node tmp=find_leaf(root,kl);
+    //     if(tmp.cnt==0) return vec;
+    //     int l=0,r=tmp.cnt-1,ret=tmp.cnt;
+    //     while(l<=r)
+    //     {
+    //         int mid=(l+r)>>1;
+    //         if(kl<tmp.val[mid].first||kl==tmp.val[mid].first) r=mid-1,ret=mid;
+    //         else l=mid+1;
+    //     }
+    //     if(ret==tmp.cnt) return vec;
+    //     KEY tt=tmp.val[ret].first;
+    //     while(tt<kr||tt==kr)
+    //     {
+    //         vec.push_back(tt.va);
+    //         if(ret==tmp.cnt-1)
+    //         {
+    //             int nx=tmp.nxt_leaf;
+    //             if(!nx) return vec;
+    //             tmp=node_cache.query(nx);ret=-1;
+    //         }
+    //         tt=tmp.val[++ret].first;
+    //     }
+    //     return vec;
+    // }
     node insert(const KEY &k,const VALUE &v,node tmp=node(),node fa=node(),int fret=-1)
     {
         if(!tmp.id) tmp=node_cache.query(root);
