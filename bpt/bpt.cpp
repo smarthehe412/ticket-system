@@ -1,6 +1,5 @@
-#include <cstdio>
-#include <cstring>
 #include <iostream>
+#include <cstring>
 #include <cstdlib>
 #include "filesystem.cpp"
 #include "vector/vector.hpp"
@@ -184,8 +183,8 @@ private:
     };
     FILE_SYSTEM<int> f1;
     FILE_SYSTEM<node> f2;
+    FILE_SYSTEM<VALUE> f3;
     LRU_CACHE<node,CN,N> node_cache;
-    LRU_CACHE<VALUE,CN,N> value_cache;
     node find_leaf(int now,const KEY &k)
     {
         node tmp=node_cache.query(now);
@@ -381,7 +380,7 @@ private:
         }
     }
 public:
-    BPT(const char *ini,const char *dat,const char *val): node_cache(dat),value_cache(val),f1(ini),f2(dat)
+    BPT(const char *ini,const char *dat,const char *val): node_cache(dat),f1(ini),f2(dat),f3(val)
     {
         if(f1.empty())
         {
@@ -407,7 +406,6 @@ public:
     void clear()
     {
         node_cache.clear();
-        value_cache.clear();
         root=1,ndc=1,vac=0;
         node tmp;
         tmp.id=1,tmp.cnt=0;
@@ -427,8 +425,9 @@ public:
             else l=mid+1;
         }
         if(!(ret&&k==tmp.val[ret-1].first)) return VALUE();
-        return value_cache.query(tmp.val[ret-1].second);
+        return f3.read(tmp.val[ret-1].second);
     }
+    //find_range only works when use KEY=pair<REAL_KEY,VALUE> to get a multiBPT
     vector<VALUE> find_range(const KEY &kl,const KEY &kr)
     {
         vector<VALUE> vec;
@@ -445,7 +444,7 @@ public:
         KEY tt=tmp.val[ret].first;
         while(tt<kr||tt==kr)
         {
-            vec.push_back(value_cache.query(tmp.val[ret].second));
+            vec.push_back(tt.va);
             if(ret==tmp.cnt-1)
             {
                 int nx=tmp.nxt_leaf;
@@ -471,7 +470,7 @@ public:
             if(ret&&k==tmp.val[ret-1].first) return fa;
             memmove(tmp.val+ret+1,tmp.val+ret,(tmp.cnt-ret)*sizeof(T));
             tmp.val[ret]=T(k,++vac),tmp.cnt++;
-            value_cache.modify(vac,v);
+            f3.write(vac,v);
             if(tmp.cnt==B) split_leaf(tmp,fa,fret);
             node_cache.modify(tmp.id,tmp);
         }
