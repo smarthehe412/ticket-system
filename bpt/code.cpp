@@ -1,35 +1,34 @@
 #include "bpt.cpp"
 #include <cstring>
-struct kv
+struct str
 {
     char name[65];
-    int len,va;
-    kv(){memset(name,0,65);len=va=0;}
-    kv(char *s,int t): va(t)
+    int len;
+    str(){memset(name,0,65);len=0;}
+    str(char *s)
     {
         memcpy(name,s,65);
         len=std::strlen(s);
     }
-    bool operator < (const kv &a) const
+    bool operator < (const str &a) const
     {
         int tlen=std::min(len,a.len);
         for(int i=0;i<tlen;i++) if(name[i]!=a.name[i]) return name[i]<a.name[i];
-        if(len!=a.len) return len<a.len;
-        return va<a.va;
+        return len<a.len;
     }
-    bool operator == (const kv &a) const
+    bool operator == (const str &a) const
     {
-        if(len!=a.len||va!=a.va) return false;
+        if(len!=a.len) return false;
         return memcmp(name,a.name,len)==0;
     }
 };
-sjtu::BPT<kv,int,25> bpt("init","data","value");
+sjtu::multiBPT<str,int,25> bpt("init","data");
 char s[65],t[65];
 
 int main()
 {
-    // freopen("in","r",stdin);
-    // freopen("out","w",stdout);
+    //freopen("in","r",stdin);
+    //freopen("out","w",stdout);
     int n;scanf("%d",&n);
     for(int i=1;i<=n;i++)
     {
@@ -37,11 +36,11 @@ int main()
         if(s[0]=='i')
         {
             int va;scanf("%d",&va);
-            bpt.insert(kv(t,va),va);
+            bpt.insert(str(t),va);
         }
         else if(s[0]=='f')
         {
-            sjtu::vector<int> vec=bpt.find_range(kv(t,0x80000000),kv(t,0x7fffffff));
+            sjtu::vector<int> vec=bpt.query(str(t));
             if(vec.size()==0) printf("null");
             for(sjtu::vector<int>::iterator it=vec.begin();it!=vec.end();it++) printf("%d ",*it);
             printf("\n");
@@ -49,7 +48,7 @@ int main()
         else
         {
             int va;scanf("%d",&va); 
-            bpt.erase(kv(t,va));
+            bpt.erase(str(t),va);
         }
     }
     return 0;
