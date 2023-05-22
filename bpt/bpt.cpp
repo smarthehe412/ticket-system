@@ -439,7 +439,11 @@ public:
                 if(k<tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
-            if(ret&&k==tmp.val[ret-1].first) return fa;
+            if(ret&&k==tmp.val[ret-1].first)
+            {
+                f3.write(tmp.val[ret-1].second,v);
+                return fa;
+            }
             memmove(tmp.val+ret+1,tmp.val+ret,(tmp.cnt-ret)*sizeof(T));
             tmp.val[ret]=T(k,++vac),tmp.cnt++;
             f3.write(vac,v);
