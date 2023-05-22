@@ -162,7 +162,7 @@ public:
         }
     }
 };
-template<class KEY,class VALUE,int B=30,int CN=16384,int N=100003>
+template<class KEY,class VALUE,int B=32,int CN=16384,int N=100003>
 class BPT
 {
     typedef pair<KEY,int> T;
@@ -195,7 +195,7 @@ private:
             while(l<=r)
             {
                 int mid=(l+r)>>1;
-                if(k<tmp.val[mid].first) r=mid-1,ret=mid;
+                if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
             if(ret==tmp.cnt&&tmp.nxt_leaf) return node_cache.query(tmp.nxt_leaf);
@@ -427,33 +427,6 @@ public:
         if(!(ret&&k==tmp.val[ret-1].first)) return VALUE();
         return f3.read(tmp.val[ret-1].second);
     }
-    vector<VALUE> find_range(const KEY &kl,const KEY &kr)
-    {
-        vector<VALUE> vec;
-        node tmp=find_leaf(root,kl);
-        if(tmp.cnt==0) return vec;
-        int l=0,r=tmp.cnt-1,ret=tmp.cnt;
-        while(l<=r)
-        {
-            int mid=(l+r)>>1;
-            if(kl<tmp.val[mid].first||kl==tmp.val[mid].first) r=mid-1,ret=mid;
-            else l=mid+1;
-        }
-        if(ret==tmp.cnt) return vec;
-        KEY tt=tmp.val[ret].first;
-        while(tt<kr||tt==kr)
-        {
-            vec.push_back(f3.read(tmp.val[ret].second));
-            if(ret==tmp.cnt-1)
-            {
-                int nx=tmp.nxt_leaf;
-                if(!nx) return vec;
-                tmp=node_cache.query(nx);ret=-1;
-            }
-            tt=tmp.val[++ret].first;
-        }
-        return vec;
-    }
     node insert(const KEY &k,const VALUE &v,node tmp=node(),node fa=node(),int fret=-1)
     {
         if(!tmp.id) tmp=node_cache.query(root);
@@ -535,7 +508,7 @@ public:
         return fa;
     }
 };
-template<class KEY,class VALUE,int B=30,int CN=16384,int N=100003>
+template<class KEY,class VALUE,int B=32,int CN=16384,int N=100003>
 class multiBPT
 {
 private:
@@ -579,7 +552,7 @@ private:
             while(l<=r)
             {
                 int mid=(l+r)>>1;
-                if(k<tmp.val[mid].first) r=mid-1,ret=mid;
+                if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
                 else l=mid+1;
             }
             if(ret==tmp.cnt&&tmp.nxt_leaf) return node_cache.query(tmp.nxt_leaf);
@@ -589,7 +562,7 @@ private:
         while(l<=r)
         {
             int mid=(l+r)>>1;
-            if(k<tmp.val[mid].first) r=mid-1,ret=mid;
+            if(k<tmp.val[mid].first||k==tmp.val[mid].first) r=mid-1,ret=mid;
             else l=mid+1;
         }
         return find_leaf(tmp.son[ret],k);
