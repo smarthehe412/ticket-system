@@ -158,6 +158,8 @@ public:
 		 */
 		bool operator!=(const iterator &rhs) const {return start!=rhs.start||pos!=rhs.pos;}
 		bool operator!=(const const_iterator &rhs) const {return start!=rhs.start||pos!=rhs.pos;}
+		bool operator<(const iterator &rhs) const {return pos<rhs.pos;}
+		bool operator<(const const_iterator &rhs) const {return pos<rhs.pos;}
 	};
 	/**
 	 * TODO
@@ -264,6 +266,8 @@ public:
 		 */
 		bool operator!=(const iterator &rhs) const {return start!=rhs.start||pos!=rhs.pos;}
 		bool operator!=(const const_iterator &rhs) const {return start!=rhs.start||pos!=rhs.pos;}
+		bool operator<(const iterator &rhs) const {return pos<rhs.pos;}
+		bool operator<(const const_iterator &rhs) const {return pos<rhs.pos;}
 		/*TODO*/
 
 	};
