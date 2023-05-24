@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
+#include <ostream>
 #include "filesystem.cpp"
 #include "vector/vector.hpp"
 
@@ -68,9 +69,8 @@ private:
     T va[CN];
     int hd,tl,siz,bf[CN],nx[CN],pos[CN];
 public:
-    LRU_CACHE(const char* dat): f(dat)
+    LRU_CACHE(const char *dat): f(dat)
     {
-        hashmap.clear();
         for(int i=0;i<CN;i++) va[i]=T(),bf[i]=nx[i]=-1,pos[i]=0;
         hd=tl=-1;
         siz=0;
@@ -389,6 +389,7 @@ public:
             tmp.id=1,tmp.cnt=0;
             tmp.is_leaf=true;
             f2.write(1,tmp);
+            f2.read(1);
         }
         else
         {
@@ -750,6 +751,7 @@ public:
             tmp.id=1,tmp.cnt=0;
             tmp.is_leaf=true;
             f2.write(1,tmp);
+            f2.read(1);
         }
         else
         {

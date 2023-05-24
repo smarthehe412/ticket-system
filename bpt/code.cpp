@@ -27,8 +27,8 @@ char s[65],t[65];
 
 int main()
 {
-    //freopen("in","r",stdin);
-    //freopen("out","w",stdout);
+    freopen("in","r",stdin);
+    freopen("out","w",stdout);
     int n;scanf("%d",&n);
     for(int i=1;i<=n;i++)
     {

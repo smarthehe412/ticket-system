@@ -7,6 +7,10 @@
 #include <string>
 #include <algorithm>
 
+/*
+rm users_init && rm users_data && rm users_value && rm login_init && rm login_data && rm login_value && rm released_init && rm released_data && rm released_value && rm trains_init && rm trains_data && rm trains_value && rm seats_init && rm seats_data && rm seats_value && rm stops_init && rm stops_data && rm pendings_init && rm pendings_data && rm orders_init && rm orders_data
+*/
+
 const int SUCCESS=0,FAILED=-1;
 
 struct USER
@@ -499,7 +503,7 @@ void query_transfer()
             default: std::cout<<FAILED<<std::endl;return;
         }
     }
-
+    std::cout<<FAILED<<std::endl;return;
 }
 void buy_ticket(int timestamp)
 {

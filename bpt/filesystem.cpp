@@ -27,14 +27,15 @@ public:
     T read(int pos)
     {
         T tmp;
-        f.seekg(pos*sizeof(T));
-        f.read(reinterpret_cast<char*>(&tmp),sizeof(T));
+        f.seekg(pos*sizeof(tmp));
+        f.read(reinterpret_cast<char*>(&tmp),sizeof(tmp));
         return tmp;
     }
     void write(int pos,T tmp)
     {
-        f.seekp(pos*sizeof(T));
-        f.write(reinterpret_cast<char*>(&tmp),sizeof(T));
+        f.seekp(pos*sizeof(tmp));
+        f.write(reinterpret_cast<char*>(&tmp),sizeof(tmp));
     }
+    void flush() {f.flush();}
 };
 }
