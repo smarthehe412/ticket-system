@@ -9,7 +9,7 @@
 using sjtu::vector;
 /*
 rm users_init && rm users_data && rm users_value && rm login_init && rm login_data && rm login_value && rm released_init && rm released_data && rm released_value && rm trains_init && rm trains_data && rm trains_value && rm seats_init && rm seats_data && rm seats_value && rm stops_init && rm stops_data && rm pendings_init && rm pendings_data && rm orders_init && rm orders_data
-g++ main.cpp -o main -g && ./main <test/1.in >test.1.ans && ./main <test/2.in >test/2.ans && ./main <test/3.in >test/3.ans && ./main <test/4.in >test/4.ans && ./main <test/5.in >test/5.ans && ./main <test/6.in >test/6.ans && ./main <test/7.in >test/7.ans && ./main <test/8.in >test/8.ans && 
+g++ main.cpp -o main -g && ./main <test/1.in >test.1.ans && ./main <test/2.in >test/2.ans && ./main <test/3.in >test/3.ans && ./main <test/4.in >test/4.ans && ./main <test/5.in >test/5.ans && ./main <test/6.in >test/6.ans
 */
 const int SUCCESS=0,FAILED=-1;
 
@@ -556,8 +556,8 @@ void query_transfer()
             int reduced=tr2.travelTimes[place-1];
             for(int k=place-1;k>=0;k--)
             {
-                l2+=(-tr2.travelTimes[k]),r2+=(-tr2.travelTimes[k]);
-                if(k<tr2.stationNum-2) l2+=(-tr2.stopoverTimes[k]),r2+=(-tr2.stopoverTimes[k]);
+                l2+=(-tr2.travelTimes[k]),r2+=(-tr2.travelTimes[k]),tcnt-=tr2.travelTimes[k];
+                if(k<tr2.stationNum-2) l2+=(-tr2.stopoverTimes[k]),r2+=(-tr2.stopoverTimes[k]),tcnt-=tr2.stopoverTimes[k];
                 if(hashmap.is(tr2.station[k].hash()))
                 {
                     ar=hashmap.query(tr2.station[k].hash());
@@ -589,7 +589,6 @@ void query_transfer()
                         train1=tr1.trainID,train2=tr2.trainID,trans=tr2.station[k];
                         st1=fr,ed1=ar,st2=st,ed2=st+reduced;
                         cost1=tc1,cost2=tc2,time=tm,seatnum1=seat1.min(tmp.stationPlace,r-1),seatnum2=seat2.min(k,place-1);
-                        std::cerr<<time<<std::endl;
                     }
                 }
                 if(k) reduced+=tr2.travelTimes[k-1]+tr2.stopoverTimes[k-1];
@@ -597,8 +596,6 @@ void query_transfer()
         }
         hashmap.clear();
     }
-    if(time==30773)
-        std::cerr<<time<<std::endl;
     if(time==2e9) {std::cout<<SUCCESS<<std::endl;return;}
     std::cout<<train1<<" "<<from<<" "<<st1<<" -> "<<trans<<" "<<ed1<<" "<<cost1<<" "<<seatnum1<<std::endl;
     std::cout<<train2<<" "<<trans<<" "<<st2<<" -> "<<to<<" "<<ed2<<" "<<cost2<<" "<<seatnum2<<std::endl;
