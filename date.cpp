@@ -30,7 +30,7 @@ struct DATE
     }
     int operator - (const DATE &a) const
     {
-        return (days[month]+day-days[a.month]-a.day)*24*60;
+        return (days[month-1]+day-days[a.month-1]-a.day)*24*60;
     }
     DATE& operator ++ (int)
     {

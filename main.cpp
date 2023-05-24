@@ -9,6 +9,7 @@
 using sjtu::vector;
 /*
 rm users_init && rm users_data && rm users_value && rm login_init && rm login_data && rm login_value && rm released_init && rm released_data && rm released_value && rm trains_init && rm trains_data && rm trains_value && rm seats_init && rm seats_data && rm seats_value && rm stops_init && rm stops_data && rm pendings_init && rm pendings_data && rm orders_init && rm orders_data
+g++ main.cpp -o main -g && ./main <test/1.in >test.1.ans && ./main <test/2.in >test/2.ans && ./main <test/3.in >test/3.ans && ./main <test/4.in >test/4.ans && ./main <test/5.in >test/5.ans && ./main <test/6.in >test/6.ans && ./main <test/7.in >test/7.ans && ./main <test/8.in >test/8.ans && 
 */
 const int SUCCESS=0,FAILED=-1;
 
