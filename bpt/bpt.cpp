@@ -3,25 +3,22 @@
 #include <cstdlib>
 #include <ostream>
 #include "filesystem.cpp"
-//#include "vector/vector.hpp"
-#include <vector>
-#include "vector/utility.hpp"
-using std::vector;
+#include "vector/vector.hpp"
 
 namespace sjtu
 {
-template<int N>
+template<int N,class T>
 struct HASH_MAP
 {
 private:
-    int bg[N],nx[N],id[N],val[N],w[N],ndc,wt;
+    int bg[N],nx[N],id[N],w[N],ndc,wt;
+    T val[N];
 public:
     HASH_MAP()
     {
         memset(bg,0,sizeof(bg));
         memset(nx,0,sizeof(nx));
         memset(id,0,sizeof(id));
-        memset(val,0,sizeof(val));
         memset(w,0,sizeof(w));
         ndc=wt=0;
     }
@@ -30,18 +27,17 @@ public:
         memset(bg,0,sizeof(bg));
         memset(nx,0,sizeof(nx));
         memset(id,0,sizeof(id));
-        memset(val,0,sizeof(val));
         memset(w,0,sizeof(w));
         ndc=wt=0;
     }
-    void ins(int x,int v)
+    void ins(int x,T v)
     {
         int tmp=x%N;
         int now=wt?w[wt--]:++ndc;
         nx[now]=bg[tmp];bg[tmp]=now;
         id[now]=x,val[now]=v;
     }
-    void del(int x,int y)
+    void del(int x,T y)
     {
         int tmp=x%N,las=0;
         for(int i=bg[tmp];i;i=nx[i])
@@ -56,18 +52,24 @@ public:
             las=i;
         }
     }
-    int query(int x)
+    bool is(int x)
+    {
+        int tmp=x%N;
+        for(int i=bg[tmp];i;i=nx[i]) if(id[i]==x) return true;
+        return false;
+    }
+    T query(int x)
     {
         int tmp=x%N;
         for(int i=bg[tmp];i;i=nx[i]) if(id[i]==x) return val[i];
-        return -1;
+        return T();
     }
 };
 template<class T,int CN,int N>
 class LRU_CACHE
 {
 private:
-    HASH_MAP<N> hashmap;
+    HASH_MAP<N,int> hashmap;
     FILE_SYSTEM<T> f;
     T va[CN];
     int hd,tl,siz,bf[CN],nx[CN],pos[CN];
@@ -92,8 +94,8 @@ public:
     }
     T query(int x)
     {
-        int tx=hashmap.query(x);
-        if(tx==-1)
+        bool is=hashmap.is(x);
+        if(!is)
         {
             int now;
             if(siz==CN)
@@ -117,6 +119,7 @@ public:
         }
         else
         {
+            int tx=hashmap.query(x);
             if(tx==hd) return va[tx]; 
             if(~bf[tx]) nx[bf[tx]]=nx[tx];
             if(~nx[tx]) bf[nx[tx]]=bf[tx];
@@ -128,8 +131,8 @@ public:
     }
     void modify(int x,T tmp)
     {
-        int tx=hashmap.query(x);
-        if(tx==-1)
+        bool is=hashmap.is(x);
+        if(!is)
         {
             int now;
             if(siz==CN)
@@ -152,6 +155,7 @@ public:
         }
         else
         {
+            int tx=hashmap.query(x);
             if(tx==hd)
             {
                 va[tx]=tmp;

@@ -2,7 +2,7 @@
 #include "string.cpp"
 namespace sjtu
 {
-const int days[13]={0,0,31,59,90,120,151,181,212,243,273,304,334};
+const int days[13]={0,31,59,90,120,151,181,212,243,273,304,334,365};
 struct DATE
 {
     int month,day;
@@ -34,31 +34,31 @@ struct DATE
     }
     DATE& operator ++ (int)
     {
-        int now=(month==12?31:days[month+1]-days[month]);
+        int now=days[month]-days[month-1];
         if(day==now) month=month%12+1,day=0;
         day++;return *this;
     }
     DATE& operator -- (int)
     {
-        int now=(month==1?31:days[month]-days[month-1]);
-        if(day==0) {month--;if(month==0) month=12;day=now+1;}
+        int now=(month==1?31:days[month-1]-days[month-2]);
+        if(day==1) {month--;if(month==0) month=12;day=now+1;}
         day--;return *this;
     }
     DATE& operator += (const int &a)
     {
         day+=a;
-        int now=(month==12?31:days[month+1]-days[month]);
+        int now=days[month]-days[month-1];
         while(now<day)
         {
             month=month%12+1,day-=now;
-            now=(month==12?31:days[month+1]-days[month]);
+            now=days[month]-days[month-1];
         }
-        now=(month==1?31:days[month]-days[month-1]);
-        while(day<0)
+        now=(month==1?31:days[month-1]-days[month-2]);
+        while(day<=0)
         {
             month--;if(month==0) month=12;
             day+=now;
-            now=(month==1?31:days[month]-days[month-1]);
+            now=(month==1?31:days[month-1]-days[month-2]);
         }
         return *this;
     }
@@ -133,7 +133,7 @@ struct DATE_TIME
     DATE date;
     TIME time;
     DATE_TIME(){}
-    DATE_TIME(DATE date,TIME time): date(date),time(time)
+    DATE_TIME(DATE dt,TIME tm): date(dt),time(tm)
     {
         date+=time.hour/24;
         time.hour%=24;
@@ -159,6 +159,11 @@ struct DATE_TIME
         time.hour%=24;
         if(time.hour<0) time.hour+=24,date--;
         return *this;
+    }
+    bool operator < (const DATE_TIME &a) const
+    {
+        if(date==a.date) return time<a.time;
+        return date<a.date;
     }
     friend std::ostream& operator << (std::ostream &s, const DATE_TIME &a);
 };

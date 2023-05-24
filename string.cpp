@@ -64,6 +64,12 @@ public:
     }
     template<int M>
     friend std::ostream& operator << (std::ostream &os,const string<M> &p);
+    int hash(int base=263,int MOD=998244353) const
+    {
+        int ret=0;
+        for(int i=0;i<len;i++) ret=((1ll*base*ret+s[i])%MOD+MOD)%MOD;
+        return ret;
+    }
 };
 template<int M>
 std::ostream& operator << (std::ostream &os,const string<M> &p)

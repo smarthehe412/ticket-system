@@ -6,6 +6,7 @@
 #include <string>
 #include <algorithm>
 
+using sjtu::vector;
 /*
 rm users_init && rm users_data && rm users_value && rm login_init && rm login_data && rm login_value && rm released_init && rm released_data && rm released_value && rm trains_init && rm trains_data && rm trains_value && rm seats_init && rm seats_data && rm seats_value && rm stops_init && rm stops_data && rm pendings_init && rm pendings_data && rm orders_init && rm orders_data
 */
@@ -425,14 +426,13 @@ void query_train()
         }
     }
     TRAIN ret=trains.query(trainID);
-    if(ret.type=='n') {std::cout<<FAILED<<std::endl;return;}
+    if(ret.type=='n'||day<ret.saleDate_l||ret.saleDate_r<day) {std::cout<<FAILED<<std::endl;return;}
     SEAT ret2=seats.query(TRAIN_DAY(trainID,day));
     if(ret2.seatNum==-1) for(int i=0;i<ret.stationNum-1;i++) ret2.rem[i]=ret.seatNum;
     std::cout<<trainID<<" "<<ret.type<<std::endl;
     sjtu::DATE_TIME now=sjtu::DATE_TIME(day,ret.startTime);int sumPrice=0;
     for(int i=0;i<ret.stationNum;i++)
     {
-        if(i>1) now+=ret.stopoverTimes[i-2];
         std::cout<<ret.station[i]<<" ";
         if(!i) std::cout<<"xx-xx xx:xx ";
         else std::cout<<now<<" ";
@@ -440,13 +440,14 @@ void query_train()
         if(i==ret.stationNum-1) std::cout<<"xx-xx xx:xx ";
         else
         {
-            if(i) now+=ret.travelTimes[i-1];
+            if(i) now+=ret.stopoverTimes[i-1];
             std::cout<<now<<" ";
         }
         std::cout<<sumPrice<<" ";
         if(i<ret.stationNum-1) sumPrice+=ret.prices[i];
         if(i<ret.stationNum-1) std::cout<<ret2.rem[i]<<std::endl;
         else std::cout<<"x"<<std::endl;
+        if(i<ret.stationNum-1) now+=ret.travelTimes[i];
     }
 }
 void query_ticket()
@@ -511,7 +512,95 @@ void query_transfer()
             default: std::cout<<FAILED<<std::endl;return;
         }
     }
-    std::cout<<FAILED<<std::endl;return;
+    vector<STOP> ret1=stops.query(from),ret2=stops.query(to);
+    sjtu::HASH_MAP<1009,sjtu::DATE_TIME> hashmap;
+    vector<TRAIN> tr;
+    sjtu::string<20> train1,train2;
+    sjtu::string<30> trans;
+    sjtu::DATE_TIME st1,ed1,st2,ed2;
+    int time=2e9,cost1=1e9,cost2=1e9,seatnum1=2e9,seatnum2=2e9;
+    for(auto i=ret2.begin();i!=ret2.end();i++)
+    {
+        STOP tmp=*i;
+        sjtu::DATE_TIME l1(tmp.saleDate_l,tmp.arriveTime),r1(tmp.saleDate_r,tmp.arriveTime);
+        if(r1.date<day||tmp.stationPlace==0) continue;
+        tr.push_back(released.query(tmp.trainID));
+    }
+    for(auto i=ret1.begin();i!=ret1.end();i++)
+    {
+        STOP tmp=*i;
+        sjtu::DATE_TIME l1(tmp.saleDate_l,tmp.leaveTime),r1(tmp.saleDate_r,tmp.leaveTime);
+        if(day<l1.date||r1.date<day) continue;
+        sjtu::DATE_TIME ar(day,l1.time),fr=ar;
+        TRAIN tr1=released.query(tmp.trainID);
+        for(int j=tmp.stationPlace+1;j<tr1.stationNum;j++)
+        {
+            ar+=tr1.travelTimes[j-1];
+            hashmap.ins(tr1.station[j].hash(),ar);
+            if(j<tr1.stationNum) ar+=tr1.stopoverTimes[j-1];
+        }
+        for(auto j=tr.begin();j!=tr.end();j++)
+        {
+            TRAIN tr2=*j;
+            if(tr2.trainID==tmp.trainID) continue;
+            int place,tcnt=0;
+            sjtu::DATE_TIME l2(tr2.saleDate_l,tr2.startTime),r2(tr2.saleDate_r,tr2.startTime);
+            for(place=0;place<tr2.stationNum;place++)
+            {
+                if(tr2.station[place]==to) break;
+                tcnt+=tr2.travelTimes[place];
+                if(place<tr2.stationNum-2) tcnt+=tr2.stopoverTimes[place];
+            }
+            l2+=tcnt,r2+=tcnt;
+            int reduced=tr2.travelTimes[place-1];
+            for(int k=place-1;k>=0;k--)
+            {
+                l2+=(-tr2.travelTimes[k]),r2+=(-tr2.travelTimes[k]);
+                if(k<tr2.stationNum-2) l2+=(-tr2.stopoverTimes[k]),r2+=(-tr2.stopoverTimes[k]);
+                if(hashmap.is(tr2.station[k].hash()))
+                {
+                    ar=hashmap.query(tr2.station[k].hash());
+                    if(r2<ar) continue;
+                    sjtu::DATE_TIME st(ar.date,r2.time);
+                    if(st<l2)
+                    {
+                        st.date=l2.date;
+                        if(st<l2) st.date++;
+                    }
+                    if(st<ar) st.date++;
+                    int r,tc2=tr2.get_price(k,place-1),tc1=0;
+                    for(r=tmp.stationPlace+1;r<tr1.stationNum;r++)
+                    {
+                        if(tr1.station[r]==tr2.station[k])
+                        {
+                            tc1=tr1.get_price(tmp.stationPlace,r-1);
+                            break;
+                        }
+                    }
+                    int tm=st-fr+reduced;
+                    bool ok=false;
+                    if(type=="cost") ok=(tc1+tc2<cost1+cost2)||(tc1+tc2==cost1+cost2&&tm<time)||(tc1+tc2==cost1+cost2&&tm==time&&tr1.trainID<train1)||(tc1+tc2==cost1+cost2&&tm==time&&tr1.trainID==train1&&tr2.trainID<train2);
+                    else ok=(tm<time)||(tm==time&&tc1+tc2<cost1+cost2)||(tc1+tc2==cost1+cost2&&tm==time&&tr1.trainID<train1)||(tc1+tc2==cost1+cost2&&tm==time&&tr1.trainID==train1&&tr2.trainID<train2);
+                    if(ok)
+                    {
+                        SEAT seat1=seats.query(TRAIN_DAY(tr1.trainID,(fr+(tr1.startTime-tmp.leaveTime)).date));
+                        SEAT seat2=seats.query(TRAIN_DAY(tr2.trainID,(st+(-tcnt)).date));
+                        train1=tr1.trainID,train2=tr2.trainID,trans=tr2.station[k];
+                        st1=fr,ed1=ar,st2=st,ed2=st+reduced;
+                        cost1=tc1,cost2=tc2,time=tm,seatnum1=seat1.min(tmp.stationPlace,r-1),seatnum2=seat2.min(k,place-1);
+                        std::cerr<<time<<std::endl;
+                    }
+                }
+                if(k) reduced+=tr2.travelTimes[k-1]+tr2.stopoverTimes[k-1];
+            }
+        }
+        hashmap.clear();
+    }
+    if(time==30773)
+        std::cerr<<time<<std::endl;
+    if(time==2e9) {std::cout<<SUCCESS<<std::endl;return;}
+    std::cout<<train1<<" "<<from<<" "<<st1<<" -> "<<trans<<" "<<ed1<<" "<<cost1<<" "<<seatnum1<<std::endl;
+    std::cout<<train2<<" "<<trans<<" "<<st2<<" -> "<<to<<" "<<ed2<<" "<<cost2<<" "<<seatnum2<<std::endl;
 }
 void buy_ticket(int timestamp)
 {
@@ -543,6 +632,12 @@ void buy_ticket(int timestamp)
     int l=train.stationNum,r=-1,tcnt=0;
     for(int i=0;i<train.stationNum;i++)
     {
+        if(train.station[i]==to)
+        {
+            r=i;
+            ed=now+tcnt;
+            break;
+        }
         if(i&&i<train.stationNum-1) init+=train.stopoverTimes[i-1],tcnt+=train.stopoverTimes[i-1];
         if(train.station[i]==from)
         {
@@ -551,15 +646,10 @@ void buy_ticket(int timestamp)
             now=st+(-tcnt);
             seat=seats.query(TRAIN_DAY(trainID,now.date));
         }
-        if(train.station[i]==to)
-        {
-            r=i;
-            ed=now+tcnt;
-            break;
-        }
-        if(i<train.stationNum-1) init+=train.travelTimes[i-1],tcnt+=train.travelTimes[i-1];
+        if(i<train.stationNum-1) init+=train.travelTimes[i],tcnt+=train.travelTimes[i];
     }
     if(l>r) {std::cout<<FAILED<<std::endl;return;}
+    if(seat.seatNum==-1) {std::cout<<FAILED<<std::endl;return;}
     int rem=seat.min(l,r-1);
     if(rem>=cnt)
     {
@@ -594,9 +684,9 @@ void query_order()
     if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
     vector<QUERY> queries=orders.query(username);
     std::cout<<queries.size()<<std::endl;
-    for(auto i=queries.begin();i!=queries.end();i++)
+    for(int i=queries.size()-1;i>=0;i--)
     {
-        QUERY tmp=*i;
+        QUERY tmp=queries[i];
         if(tmp.type==0) std::cout<<"[success] ";
         else if(tmp.type==1) std::cout<<"[pending] ";
         else std::cout<<"[refunded] ";
@@ -620,7 +710,7 @@ void refund_ticket()
     if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
     vector<QUERY> queries=orders.query(username);
     if(num>queries.size()||queries[num-1].type==2) {std::cout<<FAILED<<std::endl;return;}
-    QUERY tmp=queries[num-1];
+    QUERY tmp=queries[queries.size()-num];
     if(tmp.type==0)
     {
         SEAT seat=seats.query(tmp.trainDay);
@@ -658,8 +748,8 @@ void clean()
 }
 int main()
 {
-    freopen("test/1.in","r",stdin);
-    freopen("test/1.out","w",stdout);
+    //freopen("test/5.in","r",stdin);
+    //freopen("test/5.ans","w",stdout);
     std::ios::sync_with_stdio(false);
     std::string timestamp,cmd;
     while(std::getline(std::cin,s))
