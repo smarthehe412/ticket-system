@@ -1,5 +1,4 @@
 #include "bpt/bpt.cpp"
-#include "string.cpp"
 #include "date.cpp"
 #include <cstring>
 #include <iostream>
@@ -10,7 +9,6 @@
 /*
 rm users_init && rm users_data && rm users_value && rm login_init && rm login_data && rm login_value && rm released_init && rm released_data && rm released_value && rm trains_init && rm trains_data && rm trains_value && rm seats_init && rm seats_data && rm seats_value && rm stops_init && rm stops_data && rm pendings_init && rm pendings_data && rm orders_init && rm orders_data
 */
-
 const int SUCCESS=0,FAILED=-1;
 
 struct USER
@@ -37,17 +35,18 @@ std::string get_word()
     while(s[sp]!=' '&&sp<s.length()) sp++;
     return s.substr(st,sp-st);
 }
-sjtu::vector<std::string> get_piece(const std::string &ts)
+vector<sjtu::string<30>> get_piece(const std::string &ts)
 {
-    sjtu::vector<std::string> ret;
-    char *cs=new char(ts.length()+1);
+    vector<sjtu::string<30>> ret;
+    char *cs=new char[ts.length()+1];
     strcpy(cs,ts.c_str());
     char *tmp=strtok(cs,"|");
     while(tmp!=NULL)
     {
-        ret.push_back(std::string(tmp));
-        tmp=strtok(cs,"|");
+        ret.push_back(sjtu::string<30>(tmp));
+        tmp=strtok(NULL,"|");
     }
+    delete[] cs;
     return ret;
 }
 char get_key()
@@ -191,20 +190,26 @@ void modify_profile()
     ret2.print();
     return;
 }
+const int MAXN=101;
 struct TRAIN
 {
     sjtu::string<20> trainID;
     int stationNum,seatNum;
-    sjtu::vector<sjtu::string<30>> station;
-    sjtu::vector<int> prices,travelTimes,stopoverTimes;
+    sjtu::string<30> station[MAXN];
+    int prices[MAXN],travelTimes[MAXN],stopoverTimes[MAXN];
     sjtu::TIME startTime;
     sjtu::DATE saleDate_l,saleDate_r;
     char type;
     TRAIN(){type='n',stationNum=seatNum=0;}
-    TRAIN(sjtu::string<20> trainID,int stationNum,int seatNum,sjtu::vector<sjtu::string<30>> station,sjtu::vector<int> prices,
-    sjtu::vector<int> travelTimes,sjtu::vector<int> stopoverTimes,sjtu::TIME startTime,sjtu::DATE saleDate_l,sjtu::DATE saleDate_r,char type):
-    trainID(trainID),stationNum(stationNum),seatNum(seatNum),station(station),prices(prices),travelTimes(travelTimes),stopoverTimes(stopoverTimes),
-    startTime(startTime),saleDate_l(saleDate_l),saleDate_r(saleDate_r),type(type) {}
+    TRAIN(sjtu::string<20> trainID,int stationNum,int seatNum,sjtu::string<30> *sta,int *pric,
+    int *traveltimes,int *stopovertimes,sjtu::TIME startTime,sjtu::DATE saleDate_l,sjtu::DATE saleDate_r,char type):
+    trainID(trainID),stationNum(stationNum),seatNum(seatNum),startTime(startTime),saleDate_l(saleDate_l),saleDate_r(saleDate_r),type(type)
+    {
+        for(int i=0;i<stationNum;i++) station[i]=sta[i];
+        memcpy(prices,pric,sizeof(int)*(stationNum-1));
+        memcpy(travelTimes,traveltimes,sizeof(int)*(stationNum-1));
+        memcpy(stopoverTimes,stopovertimes,sizeof(int)*(stationNum-2));
+    }
     int get_price(int l,int r)
     {
         int ret=0;
@@ -242,10 +247,13 @@ struct STOP
 };
 struct SEAT
 {
-    int seatNum;
-    sjtu::vector<int> rem;
+    int seatNum,stationNum;
+    int rem[MAXN];
     SEAT(){seatNum=-1;}
-    SEAT(int seatNum,sjtu::vector<int> rem): seatNum(seatNum),rem(rem) {}
+    SEAT(int seatNum,int stationNum,int *rm): seatNum(seatNum),stationNum(stationNum)
+    {
+        memcpy(rem,rm,sizeof(int)*(stationNum-1));
+    }
     int min(int l,int r)
     {
         int ret=seatNum;
@@ -300,8 +308,8 @@ void add_train()
 {
     sjtu::string<20> trainID;
     int stationNum,seatNum;
-    sjtu::vector<sjtu::string<30>> station;
-    sjtu::vector<int> prices,travelTimes,stopoverTimes;
+    sjtu::string<30> station[MAXN];
+    int prices[MAXN],travelTimes[MAXN],stopoverTimes[MAXN];
     sjtu::TIME startTime;
     sjtu::DATE saleDate_l,saleDate_r;
     char type;
@@ -314,34 +322,34 @@ void add_train()
             case 'm':seatNum=stoi(get_word());break;
             case 's':
             {
-                sjtu::vector<std::string> tmp=get_piece(get_word());
-                for(auto i=tmp.begin();i!=tmp.end();i++) station.push_back(sjtu::string<30>(*i));
+                vector<sjtu::string<30>> tmp=get_piece(get_word());
+                for(int i=0;i<tmp.size();i++) station[i]=sjtu::string<30>(tmp[i]);
                 break;
             }
             case 'p':
             {
-                sjtu::vector<std::string> tmp=get_piece(get_word());
-                for(auto i=tmp.begin();i!=tmp.end();i++) prices.push_back(stoi(*i));
+                vector<sjtu::string<30>> tmp=get_piece(get_word());
+                for(int i=0;i<tmp.size();i++) prices[i]=stoi(tmp[i]);
                 break;
             }
             case 'x':startTime=sjtu::TIME(get_word());break;
             case 't':
             {
-                sjtu::vector<std::string> tmp=get_piece(get_word());
-                for(auto i=tmp.begin();i!=tmp.end();i++) travelTimes.push_back(stoi(*i));
+                vector<sjtu::string<30>> tmp=get_piece(get_word());
+                for(int i=0;i<tmp.size();i++) travelTimes[i]=stoi(tmp[i]);
                 break;
             }
             case 'o':
             {
                 std::string ts=get_word();
                 if(ts=="_") break;
-                sjtu::vector<std::string> tmp=get_piece(ts);
-                for(auto i=tmp.begin();i!=tmp.end();i++) travelTimes.push_back(stoi(*i));
+                vector<sjtu::string<30>> tmp=get_piece(ts);
+                for(int i=0;i<tmp.size();i++) stopoverTimes[i]=stoi(tmp[i]);
                 break;
             }
             case 'd':
             {
-                sjtu::vector<std::string> tmp=get_piece(get_word());
+                vector<sjtu::string<30>> tmp=get_piece(get_word());
                 saleDate_l=sjtu::DATE(tmp[0]),saleDate_r=sjtu::DATE(tmp[1]);
                 break;
             }
@@ -385,13 +393,13 @@ void release_train()
     }
     TRAIN ret=released.query(trainID);
     if(ret.type!='n') {std::cout<<FAILED<<std::endl;return;}
-    TRAIN ret2=trains.query(trainID);
-    if(ret2.type=='n') {std::cout<<FAILED<<std::endl;return;}
+    ret=trains.query(trainID);
+    if(ret.type=='n') {std::cout<<FAILED<<std::endl;return;}
     released.insert(trainID,ret);
     sjtu::DATE now(ret.saleDate_l);
-    sjtu::vector<int> ini;
-    for(int i=0;i<ret.stationNum-1;i++) ini.push_back(ret.seatNum);
-    for(;now<ret.saleDate_r||now==ret.saleDate_r;now++) seats.insert(TRAIN_DAY(ret.trainID,now),SEAT(ret.seatNum,ini));
+    int ini[MAXN];
+    for(int i=0;i<ret.stationNum-1;i++) ini[i]=ret.seatNum;
+    for(;now<ret.saleDate_r||now==ret.saleDate_r;now++) seats.insert(TRAIN_DAY(ret.trainID,now),SEAT(ret.seatNum,ret.stationNum,ini));
     sjtu::TIME st=ret.startTime;
     for(int i=0;i<ret.stationNum;i++)
     {
@@ -419,7 +427,7 @@ void query_train()
     TRAIN ret=trains.query(trainID);
     if(ret.type=='n') {std::cout<<FAILED<<std::endl;return;}
     SEAT ret2=seats.query(TRAIN_DAY(trainID,day));
-    if(ret2.seatNum==-1) for(int i=0;i<ret.stationNum-1;i++) ret2.rem.push_back(ret.seatNum);
+    if(ret2.seatNum==-1) for(int i=0;i<ret.stationNum-1;i++) ret2.rem[i]=ret.seatNum;
     std::cout<<trainID<<" "<<ret.type<<std::endl;
     sjtu::DATE_TIME now=sjtu::DATE_TIME(day,ret.startTime);int sumPrice=0;
     for(int i=0;i<ret.stationNum;i++)
@@ -457,8 +465,8 @@ void query_ticket()
             default: std::cout<<FAILED<<std::endl;return;
         }
     }
-    sjtu::vector<STOP> ret1=stops.query(from),ret2=stops.query(to);
-    sjtu::vector<TICKET> tickets; 
+    vector<STOP> ret1=stops.query(from),ret2=stops.query(to);
+    vector<TICKET> tickets; 
     auto j=ret2.begin();
     for(auto i=ret1.begin();i!=ret1.end();i++)
     {
@@ -584,7 +592,7 @@ void query_order()
     }
     USER ret=login.query(username);
     if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
-    sjtu::vector<QUERY> queries=orders.query(username);
+    vector<QUERY> queries=orders.query(username);
     std::cout<<queries.size()<<std::endl;
     for(auto i=queries.begin();i!=queries.end();i++)
     {
@@ -610,14 +618,14 @@ void refund_ticket()
     }
     USER ret=login.query(username);
     if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
-    sjtu::vector<QUERY> queries=orders.query(username);
+    vector<QUERY> queries=orders.query(username);
     if(num>queries.size()||queries[num-1].type==2) {std::cout<<FAILED<<std::endl;return;}
     QUERY tmp=queries[num-1];
     if(tmp.type==0)
     {
         SEAT seat=seats.query(tmp.trainDay);
         seat.modify(tmp.l,tmp.r-1,tmp.cnt);
-        sjtu::vector<QUERY> pends=pendings.query(tmp.trainDay);
+        vector<QUERY> pends=pendings.query(tmp.trainDay);
         for(auto i=pends.begin();i!=pends.end();i++)
         {
             QUERY tp=*i;

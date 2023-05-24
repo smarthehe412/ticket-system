@@ -13,11 +13,13 @@ public:
     string(){memset(s,0,sizeof(s)),len=0;}
     string(const std::string &a)
     {
+        memset(s,0,sizeof(s));
         len=a.length();
         for(int i=0;i<len;i++) s[i]=a[i];
     }
     string(const char *a)
     {
+        memset(s,0,sizeof(s));
         len=strlen(a);
         memcpy(s,a,len);
     }

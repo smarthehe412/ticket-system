@@ -1,4 +1,5 @@
 #include <iostream>
+#include "string.cpp"
 namespace sjtu
 {
 const int days[13]={0,0,31,59,90,120,151,181,212,243,273,304,334};
@@ -8,6 +9,12 @@ struct DATE
     DATE(){month=day=0;}
     DATE(int month,int day): month(month),day(day) {}
     DATE(const std::string &s)
+    {
+        month=(s[0]-'0')*10+s[1]-'0';
+        day=(s[3]-'0')*10+s[4]-'0';
+    }
+    template<int M>
+    DATE(const string<M> &s)
     {
         month=(s[0]-'0')*10+s[1]-'0';
         day=(s[3]-'0')*10+s[4]-'0';
@@ -59,7 +66,10 @@ struct DATE
 };
 std::ostream& operator << (std::ostream &s, const DATE &a)
 {
-    s<<a.month<<"-"<<a.day;
+    if(a.month<10) s<<"0";
+    s<<a.month<<"-";
+    if(a.day<10) s<<"0";
+    s<<a.day;
     return s;
 }
 struct TIME
@@ -68,6 +78,12 @@ struct TIME
     TIME(){hour=minute=0;}
     TIME(int hour,int minute): hour(hour),minute(minute) {}
     TIME(const std::string &s)
+    {
+        hour=(s[0]-'0')*10+s[1]-'0';
+        minute=(s[3]-'0')*10+s[4]-'0';
+    }
+    template<int M>
+    TIME(const string<M> &s)
     {
         hour=(s[0]-'0')*10+s[1]-'0';
         minute=(s[3]-'0')*10+s[4]-'0';
@@ -91,6 +107,7 @@ struct TIME
         ret.minute+=a;
         ret.hour+=ret.minute/60;
         ret.minute%=60;
+        if(minute<0) ret.minute+=60,ret.hour--;
         return ret;
     }
     TIME& operator += (const int &a)
@@ -105,7 +122,10 @@ struct TIME
 };
 std::ostream& operator << (std::ostream &s, const TIME &a)
 {
-    s<<a.hour<<":"<<a.minute;
+    if(a.hour<10) s<<"0";
+    s<<a.hour<<":";
+    if(a.minute<10) s<<"0";
+    s<<a.minute;
     return s;
 }
 struct DATE_TIME

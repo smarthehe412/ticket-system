@@ -3,7 +3,10 @@
 #include <cstdlib>
 #include <ostream>
 #include "filesystem.cpp"
-#include "vector/vector.hpp"
+//#include "vector/vector.hpp"
+#include <vector>
+#include "vector/utility.hpp"
+using std::vector;
 
 namespace sjtu
 {
