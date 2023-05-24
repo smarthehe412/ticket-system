@@ -9,7 +9,8 @@
 using sjtu::vector;
 /*
 rm users_init && rm users_data && rm users_value && rm login_init && rm login_data && rm login_value && rm released_init && rm released_data && rm released_value && rm trains_init && rm trains_data && rm trains_value && rm seats_init && rm seats_data && rm seats_value && rm stops_init && rm stops_data && rm pendings_init && rm pendings_data && rm orders_init && rm orders_data
-g++ main.cpp -o main -g -O2 && ./main <test/1.in >test.1.ans && ./main <test/2.in >test/2.ans && ./main <test/3.in >test/3.ans
+g++ main.cpp -o main -g -O2 && ./main <test/1.in >test.1.ans
+&& ./main <test/2.in >test/2.ans && ./main <test/3.in >test/3.ans && ./main <test/4.in >test/4.ans && ./main <test/5.in >test/5.ans && ./main <test/6.in >test/6.ans && ./main <test/7.in >test/7.ans && ./main <test/8.in >test/8.ans && ./main <test/9.in >test/9.ans && ./main <test/10.in >test/10.ans 
 */
 const int SUCCESS=0,FAILED=-1;
 
@@ -708,7 +709,7 @@ void refund_ticket()
     USER ret=login.query(username);
     if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
     vector<QUERY> queries=orders.query(username);
-    if(num>queries.size()||queries[num-1].type==2) {std::cout<<FAILED<<std::endl;return;}
+    if(num>queries.size()||queries[queries.size()-num].type==2) {std::cout<<FAILED<<std::endl;return;}
     QUERY tmp=queries[queries.size()-num];
     if(tmp.type==0)
     {
@@ -747,8 +748,8 @@ void clean()
 }
 int main()
 {
-    //freopen("test/5.in","r",stdin);
-    //freopen("test/5.ans","w",stdout);
+    freopen("test/1.in","r",stdin);
+    freopen("test/1.ans","w",stdout);
     std::ios::sync_with_stdio(false);
     std::string timestamp,cmd;
     while(std::getline(std::cin,s))
