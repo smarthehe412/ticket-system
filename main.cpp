@@ -302,13 +302,13 @@ bool cmpt(const TICKET &a,const TICKET &b)
     if((a.ed-a.st)==(b.ed-b.st)) return a.trainID<b.trainID;
     return (a.ed-a.st)<(b.ed-b.st);
 }
-const int B=25,CN=128;
+const int B=25,CN=64;
 sjtu::BPT<sjtu::string<20>,TRAIN,B,CN> released("released_init","released_data","released_value");
 sjtu::BPT<sjtu::string<20>,TRAIN,B,CN> trains("trains_init","trains_data","trains_value");
 sjtu::BPT<TRAIN_DAY,SEAT,B,CN> seats("seats_init","seats_data","seats_value");
-sjtu::multiBPT<sjtu::string<30>,STOP,B,CN*8> stops("stops_init","stops_data");
-sjtu::multiBPT<TRAIN_DAY,QUERY,B,CN*8> pendings("pendings_init","pendings_data");
-sjtu::multiBPT<sjtu::string<20>,QUERY,B,CN*8> orders("orders_init","orders_data");
+sjtu::multiBPT<sjtu::string<30>,STOP,B,CN> stops("stops_init","stops_data");
+sjtu::multiBPT<TRAIN_DAY,QUERY,B,CN> pendings("pendings_init","pendings_data");
+sjtu::multiBPT<sjtu::string<20>,QUERY,B,CN> orders("orders_init","orders_data");
 void add_train()
 {
     sjtu::string<20> trainID;
