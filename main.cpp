@@ -517,7 +517,7 @@ void query_transfer()
     }
     vector<STOP> ret1=stops.query(from),ret2=stops.query(to);
     vector<int> tr;
-    sjtu::FILE_SYSTEM<TRAIN> doc("trains_value");
+    sjtu::FILE_SYSTEM<TRAIN> doc("released_value");
     sjtu::string<20> train1,train2;
     sjtu::string<30> trans;
     sjtu::DATE_TIME st1,ed1,st2,ed2;
