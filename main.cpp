@@ -13,7 +13,7 @@ g++ main.cpp -o main -g -O2 && ./main <test/1.in >test.1.ans && ./main <test/2.i
 && ./main <test/7.in >test/7.ans && ./main <test/8.in >test/8.ans && ./main <test/9.in >test/9.ans && ./main <test/10.in >test/10.ans 
 */
 const int SUCCESS=0,FAILED=-1;
-
+const int B=25,CN=64;
 struct USER
 {
     sjtu::string<20> username;
@@ -27,8 +27,8 @@ struct USER
     bool operator < (const USER &a) const {return username<a.username;}
     bool operator == (const USER &a) const {return username==a.username;}
 };
-sjtu::BPT<sjtu::string<20>,USER,25,256> users("users_init","users_data","users_value");
-sjtu::BPT<sjtu::string<20>,USER,25,256> login("login_init","login_data","login_value");
+sjtu::BPT<sjtu::string<20>,USER,B,CN> users("users_init","users_data","users_value");
+sjtu::BPT<sjtu::string<20>,USER,B,CN> login("login_init","login_data","login_value");
 std::string s;
 int sp;
 std::string get_word()
@@ -302,19 +302,18 @@ bool cmpt(const TICKET &a,const TICKET &b)
     if((a.ed-a.st)==(b.ed-b.st)) return a.trainID<b.trainID;
     return (a.ed-a.st)<(b.ed-b.st);
 }
-const int B=25,CN=64;
-sjtu::BPT<sjtu::string<20>,TRAIN,B,CN> released("released_init","released_data","released_value");
-sjtu::BPT<sjtu::string<20>,TRAIN,B,CN> trains("trains_init","trains_data","trains_value");
+sjtu::BPT<sjtu::string<20>,TRAIN,B,CN/8> released("released_init","released_data","released_value");
+sjtu::BPT<sjtu::string<20>,TRAIN,B,CN/8> trains("trains_init","trains_data","trains_value");
 sjtu::BPT<TRAIN_DAY,SEAT,B,CN> seats("seats_init","seats_data","seats_value");
 sjtu::multiBPT<sjtu::string<30>,STOP,B,CN> stops("stops_init","stops_data");
 sjtu::multiBPT<TRAIN_DAY,QUERY,B,CN> pendings("pendings_init","pendings_data");
 sjtu::multiBPT<sjtu::string<20>,QUERY,B,CN> orders("orders_init","orders_data");
+sjtu::string<30> station[MAXN];
+int prices[MAXN],travelTimes[MAXN],stopoverTimes[MAXN];
 void add_train()
 {
     sjtu::string<20> trainID;
     int stationNum,seatNum;
-    sjtu::string<30> station[MAXN];
-    int prices[MAXN],travelTimes[MAXN],stopoverTimes[MAXN];
     sjtu::TIME startTime;
     sjtu::DATE saleDate_l,saleDate_r;
     char type;
