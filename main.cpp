@@ -5,7 +5,6 @@
 #include <iostream>
 #include <ostream>
 #include <string>
-#include <algorithm>
 
 using sjtu::vector;
 /*
@@ -490,8 +489,8 @@ void query_ticket()
         int seat=st.min(tmp1.stationPlace,tmp2.stationPlace-1);
         tickets.push_back(TICKET(tr.trainID,price,seat,init+(tmp1.leaveTime-tr.startTime),init+(tmp2.arriveTime-tr.startTime)));
     }
-    if(type=="cost") std::sort(tickets.begin(),tickets.end(),cmpc);
-    else std::sort(tickets.begin(),tickets.end(),cmpt);
+    if(type=="cost") sjtu::sort(tickets,0,tickets.size()-1,cmpc);
+    else sjtu::sort(tickets,0,tickets.size()-1,cmpt);
     std::cout<<tickets.size()<<'\n';
     for(auto i=tickets.begin();i!=tickets.end();i++)
     {
