@@ -750,8 +750,8 @@ void clean()
 }
 int main()
 {
-    freopen("test/6.in","r",stdin);
-    freopen("test/6.ans","w",stdout);
+    //freopen("test/6.in","r",stdin);
+    //freopen("test/6.ans","w",stdout);
     std::ios::sync_with_stdio(false);
     std::string timestamp,cmd;
     while(std::getline(std::cin,s))
