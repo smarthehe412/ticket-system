@@ -759,10 +759,6 @@ int main()
         sp=0;
         timestamp=get_word();
         std::cout<<timestamp<<" ";
-        if(timestamp=="[2097696]")
-        {
-            std::cerr<<"debug"<<std::endl;
-        }
         cmd=get_word();
         if(cmd=="add_user") add_user();
         else if(cmd=="login") log_in();
