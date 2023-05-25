@@ -170,11 +170,10 @@ public:
         }
     }
 };
-template<class KEY,class VALUE,int CN=16384,int N=100003>
+template<class KEY,class VALUE,int CN=32,int N=10007>
 class BPT
 {
     typedef pair<KEY,int> T;
-    typedef pair<std::fstream,int> LINK;
     static const int B = std::max(4,4000/(int)(sizeof(T)+sizeof(int)));
 private:
     int root,ndc,vac;
@@ -537,7 +536,7 @@ public:
         return fa;
     }
 };
-template<class KEY,class VALUE,int CN=16384,int N=100003>
+template<class KEY,class VALUE,int CN=32,int N=10007>
 class multiBPT
 {
 private:

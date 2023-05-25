@@ -14,7 +14,7 @@ g++ main.cpp -o main -g -O2 && ./main <test/1.in >test.1.ans && ./main <test/2.i
 && ./main <test/7.in >test/7.ans && ./main <test/8.in >test/8.ans && ./main <test/9.in >test/9.ans && ./main <test/10.in >test/10.ans 
 */
 const int SUCCESS=0,FAILED=-1;
-const int CN=64;
+const int CN=32;
 struct USER
 {
     sjtu::string<20> username;
@@ -301,8 +301,8 @@ bool cmpt(const TICKET &a,const TICKET &b)
     if((a.ed-a.st)==(b.ed-b.st)) return a.trainID<b.trainID;
     return (a.ed-a.st)<(b.ed-b.st);
 }
-sjtu::BPT<sjtu::string<20>,TRAIN,CN/8> released("released_init","released_data","released_value");
-sjtu::BPT<sjtu::string<20>,TRAIN,CN/8> trains("trains_init","trains_data","trains_value");
+sjtu::BPT<sjtu::string<20>,TRAIN,CN> released("released_init","released_data","released_value");
+sjtu::BPT<sjtu::string<20>,TRAIN,CN> trains("trains_init","trains_data","trains_value");
 sjtu::BPT<TRAIN_DAY,SEAT,CN> seats("seats_init","seats_data","seats_value");
 sjtu::multiBPT<sjtu::string<30>,STOP,CN> stops("stops_init","stops_data");
 sjtu::multiBPT<TRAIN_DAY,QUERY,CN> pendings("pendings_init","pendings_data");
