@@ -1,6 +1,7 @@
 #include "bpt/bpt.cpp"
 #include "date.cpp"
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <ostream>
 #include <string>
@@ -13,7 +14,7 @@ g++ main.cpp -o main -g -O2 && ./main <test/1.in >test.1.ans && ./main <test/2.i
 && ./main <test/7.in >test/7.ans && ./main <test/8.in >test/8.ans && ./main <test/9.in >test/9.ans && ./main <test/10.in >test/10.ans 
 */
 const int SUCCESS=0,FAILED=-1;
-const int B=25,CN=64;
+const int CN=64;
 struct USER
 {
     sjtu::string<20> username;
@@ -23,12 +24,12 @@ struct USER
     USER(){privilege=-1;}
     USER(sjtu::string<20> username,sjtu::string<30> password,sjtu::string<20> name,sjtu::string<30> mailAddr,int privilege):
         username(username),password(password),name(name),mailAddr(mailAddr),privilege(privilege) {}
-    void print() {std::cout<<username<<" "<<name<<" "<<mailAddr<<" "<<privilege<<std::endl;}
+    void print() {std::cout<<username<<" "<<name<<" "<<mailAddr<<" "<<privilege<<'\n';}
     bool operator < (const USER &a) const {return username<a.username;}
     bool operator == (const USER &a) const {return username==a.username;}
 };
-sjtu::BPT<sjtu::string<20>,USER,B,CN> users("users_init","users_data","users_value");
-sjtu::BPT<sjtu::string<20>,USER,B,CN> login("login_init","login_data","login_value");
+sjtu::BPT<sjtu::string<20>,USER,CN> users("users_init","users_data","users_value");
+sjtu::BPT<sjtu::string<20>,USER,CN> login("login_init","login_data","login_value");
 std::string s;
 int sp;
 std::string get_word()
@@ -72,22 +73,22 @@ void add_user()
             case 'n': name=get_word();break;
             case 'm': mailAddr=get_word();break;
             case 'g': privilege=stoi(get_word());break;
-            default: std::cout<<FAILED<<std::endl;return;
+            default: std::cout<<FAILED<<'\n';return;
         }
     }
     if(users.empty())
     {
         privilege=10;
         users.insert(username,USER(username,password,name,mailAddr,privilege));
-        std::cout<<SUCCESS<<std::endl;return;
+        std::cout<<SUCCESS<<'\n';return;
     }
     USER ret=login.query(cur_username);
-    if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
+    if(ret.privilege==-1) {std::cout<<FAILED<<'\n';return;}
     USER ret2=users.query(username);
-    if(ret2.privilege!=-1) {std::cout<<FAILED<<std::endl;return;}
-    if(ret.privilege<=privilege) {std::cout<<FAILED<<std::endl;return;}
+    if(ret2.privilege!=-1) {std::cout<<FAILED<<'\n';return;}
+    if(ret.privilege<=privilege) {std::cout<<FAILED<<'\n';return;}
     users.insert(username,USER(username,password,name,mailAddr,privilege));
-    std::cout<<SUCCESS<<std::endl;return;
+    std::cout<<SUCCESS<<'\n';return;
 }
 void log_in()
 {
@@ -99,16 +100,16 @@ void log_in()
         {
             case 'u': username=get_word();break;
             case 'p': password=get_word();break;
-            default: std::cout<<FAILED<<std::endl;return;
+            default: std::cout<<FAILED<<'\n';return;
         }
     }
     USER ret=users.query(username);
-    if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
-    if(ret.password!=password) {std::cout<<FAILED<<std::endl;return;}
+    if(ret.privilege==-1) {std::cout<<FAILED<<'\n';return;}
+    if(ret.password!=password) {std::cout<<FAILED<<'\n';return;}
     USER ret2=login.query(username);
-    if(ret2.privilege!=-1) {std::cout<<FAILED<<std::endl;return;}
+    if(ret2.privilege!=-1) {std::cout<<FAILED<<'\n';return;}
     login.insert(username,ret);
-    std::cout<<SUCCESS<<std::endl;return;
+    std::cout<<SUCCESS<<'\n';return;
 }
 void log_out()
 {
@@ -118,13 +119,13 @@ void log_out()
         switch(get_key())
         {
             case 'u': username=get_word();break;
-            default: std::cout<<FAILED<<std::endl;return;
+            default: std::cout<<FAILED<<'\n';return;
         }
     }
     USER ret=login.query(username);
-    if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
+    if(ret.privilege==-1) {std::cout<<FAILED<<'\n';return;}
     login.erase(username);
-    std::cout<<SUCCESS<<std::endl;return;
+    std::cout<<SUCCESS<<'\n';return;
 }
 void query_profile()
 {
@@ -135,15 +136,15 @@ void query_profile()
         {
             case 'c': cur_username=get_word();break;
             case 'u': username=get_word();break;
-            default: std::cout<<FAILED<<std::endl;return;
+            default: std::cout<<FAILED<<'\n';return;
         }
     }
     USER ret=login.query(cur_username);
-    if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
+    if(ret.privilege==-1) {std::cout<<FAILED<<'\n';return;}
     if(cur_username==username) {ret.print();return;}
     USER ret2=users.query(username);
-    if(ret2.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
-    if(ret.privilege<=ret2.privilege) {std::cout<<FAILED<<std::endl;return;}
+    if(ret2.privilege==-1) {std::cout<<FAILED<<'\n';return;}
+    if(ret.privilege<=ret2.privilege) {std::cout<<FAILED<<'\n';return;}
     ret2.print();
     return;
 }
@@ -162,16 +163,14 @@ void modify_profile()
             case 'n': name=get_word();break;
             case 'm': mailAddr=get_word();break;
             case 'g': privilege=stoi(get_word());break;
-            default: std::cout<<FAILED<<std::endl;return;
+            default: std::cout<<FAILED<<'\n';return;
         }
     }
     USER ret=login.query(cur_username);
-    if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
-    if(ret.privilege<=privilege) {std::cout<<FAILED<<std::endl;return;}
+    if(ret.privilege==-1) {std::cout<<FAILED<<'\n';return;}
+    if(ret.privilege<=privilege) {std::cout<<FAILED<<'\n';return;}
     if(cur_username==username)
     {
-        users.erase(username);
-        login.erase(username);
         if(password.length()) ret.password=password;
         if(name.length()) ret.name=name;
         if(mailAddr.length()) ret.mailAddr=mailAddr;
@@ -182,15 +181,15 @@ void modify_profile()
         return;
     }
     USER ret2=users.query(username);
-    if(ret2.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
-    if(ret.privilege<=ret2.privilege) {std::cout<<FAILED<<std::endl;return;}
+    if(ret2.privilege==-1) {std::cout<<FAILED<<'\n';return;}
+    if(ret.privilege<=ret2.privilege) {std::cout<<FAILED<<'\n';return;}
     if(password.length()) ret2.password=password;
     if(name.length()) ret2.name=name;
     if(mailAddr.length()) ret2.mailAddr=mailAddr;
     if(privilege!=-1) ret2.privilege=privilege;
     USER ret3=login.query(username);
-    users.erase(username),users.insert(username,ret2);
-    if(ret3.privilege!=-1) login.erase(username),login.insert(username,ret2);
+    users.insert(username,ret2);
+    if(ret3.privilege!=-1) login.insert(username,ret2);
     ret2.print();
     return;
 }
@@ -302,12 +301,13 @@ bool cmpt(const TICKET &a,const TICKET &b)
     if((a.ed-a.st)==(b.ed-b.st)) return a.trainID<b.trainID;
     return (a.ed-a.st)<(b.ed-b.st);
 }
-sjtu::BPT<sjtu::string<20>,TRAIN,B,CN/8> released("released_init","released_data","released_value");
-sjtu::BPT<sjtu::string<20>,TRAIN,B,CN/8> trains("trains_init","trains_data","trains_value");
-sjtu::BPT<TRAIN_DAY,SEAT,B,CN> seats("seats_init","seats_data","seats_value");
-sjtu::multiBPT<sjtu::string<30>,STOP,B,CN> stops("stops_init","stops_data");
-sjtu::multiBPT<TRAIN_DAY,QUERY,B,CN> pendings("pendings_init","pendings_data");
-sjtu::multiBPT<sjtu::string<20>,QUERY,B,CN> orders("orders_init","orders_data");
+sjtu::BPT<sjtu::string<20>,TRAIN,CN/8> released("released_init","released_data","released_value");
+sjtu::BPT<sjtu::string<20>,TRAIN,CN/8> trains("trains_init","trains_data","trains_value");
+sjtu::BPT<TRAIN_DAY,SEAT,CN> seats("seats_init","seats_data","seats_value");
+sjtu::multiBPT<sjtu::string<30>,STOP,CN> stops("stops_init","stops_data");
+sjtu::multiBPT<TRAIN_DAY,QUERY,CN> pendings("pendings_init","pendings_data");
+sjtu::multiBPT<sjtu::string<20>,QUERY,CN> orders("orders_init","orders_data");
+sjtu::HASH_MAP<1009,sjtu::DATE_TIME> hashmap;
 sjtu::string<30> station[MAXN];
 int prices[MAXN],travelTimes[MAXN],stopoverTimes[MAXN];
 void add_train()
@@ -358,13 +358,13 @@ void add_train()
                 break;
             }
             case 'y':type=get_word()[0];break;
-            default: std::cout<<FAILED<<std::endl;return;
+            default: std::cout<<FAILED<<'\n';return;
         }
     }
     TRAIN ret=trains.query(trainID);
-    if(ret.type!='n') {std::cout<<FAILED<<std::endl;return;}
+    if(ret.type!='n') {std::cout<<FAILED<<'\n';return;}
     trains.insert(trainID, TRAIN(trainID,stationNum,seatNum,station,prices,travelTimes,stopoverTimes,startTime,saleDate_l,saleDate_r,type));
-    std::cout<<SUCCESS<<std::endl;return;
+    std::cout<<SUCCESS<<'\n';return;
 }
 void delete_train()
 {
@@ -374,15 +374,15 @@ void delete_train()
         switch(get_key())
         {
             case 'i':trainID=get_word();break;
-            default: std::cout<<FAILED<<std::endl;return;
+            default: std::cout<<FAILED<<'\n';return;
         }
     }
     TRAIN ret=released.query(trainID);
-    if(ret.type!='n') {std::cout<<FAILED<<std::endl;return;}
+    if(ret.type!='n') {std::cout<<FAILED<<'\n';return;}
     TRAIN ret2=trains.query(trainID);
-    if(ret2.type=='n') {std::cout<<FAILED<<std::endl;return;}
+    if(ret2.type=='n') {std::cout<<FAILED<<'\n';return;}
     trains.erase(trainID);
-    std::cout<<SUCCESS<<std::endl;return;
+    std::cout<<SUCCESS<<'\n';return;
 }
 void release_train()
 {
@@ -392,13 +392,13 @@ void release_train()
         switch(get_key())
         {
             case 'i':trainID=get_word();break;
-            default: std::cout<<FAILED<<std::endl;return;
+            default: std::cout<<FAILED<<'\n';return;
         }
     }
     TRAIN ret=released.query(trainID);
-    if(ret.type!='n') {std::cout<<FAILED<<std::endl;return;}
+    if(ret.type!='n') {std::cout<<FAILED<<'\n';return;}
     ret=trains.query(trainID);
-    if(ret.type=='n') {std::cout<<FAILED<<std::endl;return;}
+    if(ret.type=='n') {std::cout<<FAILED<<'\n';return;}
     released.insert(trainID,ret);
     sjtu::DATE now(ret.saleDate_l);
     int ini[MAXN];
@@ -413,7 +413,7 @@ void release_train()
         if(i==ret.stationNum-1) break;
         st+=ret.travelTimes[i]+wait;
     }
-    std::cout<<SUCCESS<<std::endl;return;
+    std::cout<<SUCCESS<<'\n';return;
 }
 void query_train()
 {
@@ -425,14 +425,14 @@ void query_train()
         {
             case 'i':trainID=get_word();break;
             case 'd':day=sjtu::DATE(get_word());break;
-            default: std::cout<<FAILED<<std::endl;return;
+            default: std::cout<<FAILED<<'\n';return;
         }
     }
     TRAIN ret=trains.query(trainID);
-    if(ret.type=='n'||day<ret.saleDate_l||ret.saleDate_r<day) {std::cout<<FAILED<<std::endl;return;}
+    if(ret.type=='n'||day<ret.saleDate_l||ret.saleDate_r<day) {std::cout<<FAILED<<'\n';return;}
     SEAT ret2=seats.query(TRAIN_DAY(trainID,day));
     if(ret2.seatNum==-1) for(int i=0;i<ret.stationNum-1;i++) ret2.rem[i]=ret.seatNum;
-    std::cout<<trainID<<" "<<ret.type<<std::endl;
+    std::cout<<trainID<<" "<<ret.type<<'\n';
     sjtu::DATE_TIME now=sjtu::DATE_TIME(day,ret.startTime);int sumPrice=0;
     for(int i=0;i<ret.stationNum;i++)
     {
@@ -448,8 +448,8 @@ void query_train()
         }
         std::cout<<sumPrice<<" ";
         if(i<ret.stationNum-1) sumPrice+=ret.prices[i];
-        if(i<ret.stationNum-1) std::cout<<ret2.rem[i]<<std::endl;
-        else std::cout<<"x"<<std::endl;
+        if(i<ret.stationNum-1) std::cout<<ret2.rem[i]<<'\n';
+        else std::cout<<"x"<<'\n';
         if(i<ret.stationNum-1) now+=ret.travelTimes[i];
     }
 }
@@ -466,7 +466,7 @@ void query_ticket()
             case 't':to=get_word();break;
             case 'd':day=sjtu::DATE(get_word());break;
             case 'p':type=get_word();break;
-            default: std::cout<<FAILED<<std::endl;return;
+            default: std::cout<<FAILED<<'\n';return;
         }
     }
     vector<STOP> ret1=stops.query(from),ret2=stops.query(to);
@@ -492,11 +492,11 @@ void query_ticket()
     }
     if(type=="cost") std::sort(tickets.begin(),tickets.end(),cmpc);
     else std::sort(tickets.begin(),tickets.end(),cmpt);
-    std::cout<<tickets.size()<<std::endl;
+    std::cout<<tickets.size()<<'\n';
     for(auto i=tickets.begin();i!=tickets.end();i++)
     {
         TICKET tmp=*i;
-        std::cout<<tmp.trainID<<" "<<from<<" "<<tmp.st<<" -> "<<to<<" "<<tmp.ed<<" "<<tmp.price<<" "<<tmp.seat<<std::endl;
+        std::cout<<tmp.trainID<<" "<<from<<" "<<tmp.st<<" -> "<<to<<" "<<tmp.ed<<" "<<tmp.price<<" "<<tmp.seat<<'\n';
     }
 }
 void query_transfer()
@@ -512,12 +512,12 @@ void query_transfer()
             case 't':to=get_word();break;
             case 'd':day=sjtu::DATE(get_word());break;
             case 'p':type=get_word();break;
-            default: std::cout<<FAILED<<std::endl;return;
+            default: std::cout<<FAILED<<'\n';return;
         }
     }
     vector<STOP> ret1=stops.query(from),ret2=stops.query(to);
-    sjtu::HASH_MAP<1009,sjtu::DATE_TIME> hashmap;
-    vector<TRAIN> tr;
+    vector<int> tr;
+    sjtu::FILE_SYSTEM<TRAIN> doc("trains_value");
     sjtu::string<20> train1,train2;
     sjtu::string<30> trans;
     sjtu::DATE_TIME st1,ed1,st2,ed2;
@@ -527,7 +527,7 @@ void query_transfer()
         STOP tmp=*i;
         sjtu::DATE_TIME l1(tmp.saleDate_l,tmp.arriveTime),r1(tmp.saleDate_r,tmp.arriveTime);
         if(r1.date<day||tmp.stationPlace==0) continue;
-        tr.push_back(released.query(tmp.trainID));
+        tr.push_back(released.querylink(tmp.trainID));
     }
     for(auto i=ret1.begin();i!=ret1.end();i++)
     {
@@ -544,7 +544,7 @@ void query_transfer()
         }
         for(auto j=tr.begin();j!=tr.end();j++)
         {
-            TRAIN tr2=*j;
+            TRAIN tr2=doc.read(*j);
             if(tr2.trainID==tmp.trainID) continue;
             int place,tcnt=0;
             sjtu::DATE_TIME l2(tr2.saleDate_l,tr2.startTime),r2(tr2.saleDate_r,tr2.startTime);
@@ -599,9 +599,9 @@ void query_transfer()
         }
         hashmap.clear();
     }
-    if(time==2e9) {std::cout<<SUCCESS<<std::endl;return;}
-    std::cout<<train1<<" "<<from<<" "<<st1<<" -> "<<trans<<" "<<ed1<<" "<<cost1<<" "<<seatnum1<<std::endl;
-    std::cout<<train2<<" "<<trans<<" "<<st2<<" -> "<<to<<" "<<ed2<<" "<<cost2<<" "<<seatnum2<<std::endl;
+    if(time==2e9) {std::cout<<SUCCESS<<'\n';return;}
+    std::cout<<train1<<" "<<from<<" "<<st1<<" -> "<<trans<<" "<<ed1<<" "<<cost1<<" "<<seatnum1<<'\n';
+    std::cout<<train2<<" "<<trans<<" "<<st2<<" -> "<<to<<" "<<ed2<<" "<<cost2<<" "<<seatnum2<<'\n';
 }
 void buy_ticket(int timestamp)
 {
@@ -621,13 +621,13 @@ void buy_ticket(int timestamp)
             case 'f':from=get_word();break;
             case 't':to=get_word();break;
             case 'q':if(get_word()=="true") ispend=true;break;
-            default: std::cout<<FAILED<<std::endl;return;
+            default: std::cout<<FAILED<<'\n';return;
         }
     }
     USER ret=login.query(username);
-    if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
+    if(ret.privilege==-1) {std::cout<<FAILED<<'\n';return;}
     TRAIN train=released.query(trainID);
-    if(train.type=='n'||cnt>train.seatNum) {std::cout<<FAILED<<std::endl;return;}
+    if(train.type=='n'||cnt>train.seatNum) {std::cout<<FAILED<<'\n';return;}
     sjtu::DATE_TIME init(train.saleDate_l,train.startTime),now,st,ed;
     SEAT seat;
     int l=train.stationNum,r=-1,tcnt=0;
@@ -649,25 +649,24 @@ void buy_ticket(int timestamp)
         }
         if(i<train.stationNum-1) init+=train.travelTimes[i],tcnt+=train.travelTimes[i];
     }
-    if(l>r) {std::cout<<FAILED<<std::endl;return;}
-    if(seat.seatNum==-1) {std::cout<<FAILED<<std::endl;return;}
+    if(l>r) {std::cout<<FAILED<<'\n';return;}
+    if(seat.seatNum==-1) {std::cout<<FAILED<<'\n';return;}
     int rem=seat.min(l,r-1);
     if(rem>=cnt)
     {
         seat.modify(l,r-1,-cnt);
         int price=train.get_price(l,r-1);
-        seats.erase(TRAIN_DAY(trainID,now.date));
         seats.insert(TRAIN_DAY(trainID,now.date),seat);
         orders.insert(username,QUERY(timestamp,username,TRAIN_DAY(trainID,now.date),from,to,st,ed,price,cnt,l,r,0));
-        std::cout<<price*cnt<<std::endl;
+        std::cout<<1ll*price*cnt<<'\n';
     }
     else
     {
-        if(!ispend) {std::cout<<FAILED<<std::endl;return;}
+        if(!ispend) {std::cout<<FAILED<<'\n';return;}
         int price=train.get_price(l,r-1);
         pendings.insert(TRAIN_DAY(trainID,now.date),QUERY(timestamp,username,TRAIN_DAY(trainID,now.date),from,to,st,ed,price,cnt,l,r,1));
         orders.insert(username,QUERY(timestamp,username,TRAIN_DAY(trainID,now.date),from,to,st,ed,price,cnt,l,r,1));
-        std::cout<<"queue"<<std::endl;
+        std::cout<<"queue"<<'\n';
     }
 }
 void query_order()
@@ -678,20 +677,20 @@ void query_order()
         switch(get_key())
         {
             case 'u':username=get_word();break;
-            default: std::cout<<FAILED<<std::endl;return;
+            default: std::cout<<FAILED<<'\n';return;
         }
     }
     USER ret=login.query(username);
-    if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
+    if(ret.privilege==-1) {std::cout<<FAILED<<'\n';return;}
     vector<QUERY> queries=orders.query(username);
-    std::cout<<queries.size()<<std::endl;
+    std::cout<<queries.size()<<'\n';
     for(int i=queries.size()-1;i>=0;i--)
     {
         QUERY tmp=queries[i];
         if(tmp.type==0) std::cout<<"[success] ";
         else if(tmp.type==1) std::cout<<"[pending] ";
         else std::cout<<"[refunded] ";
-        std::cout<<tmp.trainDay.trainID<<" "<<tmp.from<<" "<<tmp.st<<" -> "<<tmp.to<<" "<<tmp.ed<<" "<<tmp.price<<" "<<tmp.cnt<<std::endl;
+        std::cout<<tmp.trainDay.trainID<<" "<<tmp.from<<" "<<tmp.st<<" -> "<<tmp.to<<" "<<tmp.ed<<" "<<tmp.price<<" "<<tmp.cnt<<'\n';
     }
 }
 void refund_ticket()
@@ -704,13 +703,13 @@ void refund_ticket()
         {
             case 'u':username=get_word();break;
             case 'n':num=stoi(get_word());break;
-            default: std::cout<<FAILED<<std::endl;return;
+            default: std::cout<<FAILED<<'\n';return;
         }
     }
     USER ret=login.query(username);
-    if(ret.privilege==-1) {std::cout<<FAILED<<std::endl;return;}
+    if(ret.privilege==-1) {std::cout<<FAILED<<'\n';return;}
     vector<QUERY> queries=orders.query(username);
-    if(num>queries.size()||queries[queries.size()-num].type==2) {std::cout<<FAILED<<std::endl;return;}
+    if(num>queries.size()||queries[queries.size()-num].type==2) {std::cout<<FAILED<<'\n';return;}
     QUERY tmp=queries[queries.size()-num];
     if(tmp.type==0)
     {
@@ -730,14 +729,13 @@ void refund_ticket()
                 orders.insert(tp.username,tp);
             }
         }
-        seats.erase(tmp.trainDay);
         seats.insert(tmp.trainDay,seat);
     }
     else pendings.erase(tmp.trainDay,tmp);
     orders.erase(username,tmp);
     tmp.type=2;
     orders.insert(username,tmp);
-    std::cout<<SUCCESS<<std::endl;return;
+    std::cout<<SUCCESS<<'\n';return;
 }
 void clean()
 {
@@ -745,7 +743,7 @@ void clean()
     trains.clear();released.clear();
     seats.clear();stops.clear();
     pendings.clear();orders.clear();
-    std::cout<<SUCCESS<<std::endl;return;
+    std::cout<<SUCCESS<<'\n';return;
 }
 int main()
 {
@@ -776,9 +774,9 @@ int main()
         else if(cmd=="clean") clean();
         else if(cmd=="exit")
         {
-            std::cout<<"bye"<<std::endl;
+            std::cout<<"bye"<<'\n';
             login.clear();
-            return 0;
+            return std::cout<<std::flush,0;
         }
         s.clear();
     }

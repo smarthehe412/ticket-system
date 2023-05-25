@@ -8,7 +8,7 @@ template<int N>
 class string
 {
 public:
-    char s[N];
+    char s[N+1];
     int len;
     string(){memset(s,0,sizeof(s)),len=0;}
     string(const std::string &a)

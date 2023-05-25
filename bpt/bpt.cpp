@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
@@ -169,10 +170,12 @@ public:
         }
     }
 };
-template<class KEY,class VALUE,int B=32,int CN=16384,int N=100003>
+template<class KEY,class VALUE,int CN=16384,int N=100003>
 class BPT
 {
     typedef pair<KEY,int> T;
+    typedef pair<std::fstream,int> LINK;
+    static const int B = std::max(4,4000/(int)(sizeof(T)+sizeof(int)));
 private:
     int root,ndc,vac;
     struct node
@@ -435,6 +438,20 @@ public:
         if(!(ret&&k==tmp.val[ret-1].first)) return VALUE();
         return f3.read(tmp.val[ret-1].second);
     }
+    int querylink(const KEY &k)
+    {
+        node tmp=find_leaf(root,k);
+        if(tmp.cnt==0) return -1;
+        int l=0,r=tmp.cnt-1,ret=tmp.cnt;
+        while(l<=r)
+        {
+            int mid=(l+r)>>1;
+            if(k<tmp.val[mid].first) r=mid-1,ret=mid;
+            else l=mid+1;
+        }
+        if(!(ret&&k==tmp.val[ret-1].first)) return -1;
+        return tmp.val[ret-1].second;
+    }
     node insert(const KEY &k,const VALUE &v,node tmp=node(),node fa=node(),int fret=-1)
     {
         if(!tmp.id) tmp=node_cache.query(root);
@@ -520,7 +537,7 @@ public:
         return fa;
     }
 };
-template<class KEY,class VALUE,int B=32,int CN=16384,int N=100003>
+template<class KEY,class VALUE,int CN=16384,int N=100003>
 class multiBPT
 {
 private:
@@ -537,6 +554,7 @@ private:
         }
         bool operator == (const T &a) {return first==a.first&&second==a.second;}
     };
+    static const int B = std::max(4,4000/(int)(sizeof(T)+sizeof(int)));
     int root,ndc;
     struct node
     {
