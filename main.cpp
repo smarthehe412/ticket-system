@@ -9,8 +9,8 @@
 using sjtu::vector;
 /*
 rm users_init && rm users_data && rm users_value && rm login_init && rm login_data && rm login_value && rm released_init && rm released_data && rm released_value && rm trains_init && rm trains_data && rm trains_value && rm seats_init && rm seats_data && rm seats_value && rm stops_init && rm stops_data && rm pendings_init && rm pendings_data && rm orders_init && rm orders_data
-g++ main.cpp -o main -g -O2 && ./main <test/1.in >test.1.ans
-&& ./main <test/2.in >test/2.ans && ./main <test/3.in >test/3.ans && ./main <test/4.in >test/4.ans && ./main <test/5.in >test/5.ans && ./main <test/6.in >test/6.ans && ./main <test/7.in >test/7.ans && ./main <test/8.in >test/8.ans && ./main <test/9.in >test/9.ans && ./main <test/10.in >test/10.ans 
+g++ main.cpp -o main -g -O2 && ./main <test/1.in >test.1.ans && ./main <test/2.in >test/2.ans && ./main <test/3.in >test/3.ans && ./main <test/4.in >test/4.ans && ./main <test/5.in >test/5.ans && ./main <test/6.in >test/6.ans 
+&& ./main <test/7.in >test/7.ans && ./main <test/8.in >test/8.ans && ./main <test/9.in >test/9.ans && ./main <test/10.in >test/10.ans 
 */
 const int SUCCESS=0,FAILED=-1;
 
@@ -302,12 +302,13 @@ bool cmpt(const TICKET &a,const TICKET &b)
     if((a.ed-a.st)==(b.ed-b.st)) return a.trainID<b.trainID;
     return (a.ed-a.st)<(b.ed-b.st);
 }
-sjtu::BPT<sjtu::string<20>,TRAIN,25,256> released("released_init","released_data","released_value");
-sjtu::BPT<sjtu::string<20>,TRAIN,25,256> trains("trains_init","trains_data","trains_value");
-sjtu::BPT<TRAIN_DAY,SEAT,25,256> seats("seats_init","seats_data","seats_value");
-sjtu::multiBPT<sjtu::string<30>,STOP,25,256> stops("stops_init","stops_data");
-sjtu::multiBPT<TRAIN_DAY,QUERY,25,256> pendings("pendings_init","pendings_data");
-sjtu::multiBPT<sjtu::string<20>,QUERY,25,256> orders("orders_init","orders_data");
+const int B=25,CN=128;
+sjtu::BPT<sjtu::string<20>,TRAIN,B,CN> released("released_init","released_data","released_value");
+sjtu::BPT<sjtu::string<20>,TRAIN,B,CN> trains("trains_init","trains_data","trains_value");
+sjtu::BPT<TRAIN_DAY,SEAT,B,CN> seats("seats_init","seats_data","seats_value");
+sjtu::multiBPT<sjtu::string<30>,STOP,B,CN*8> stops("stops_init","stops_data");
+sjtu::multiBPT<TRAIN_DAY,QUERY,B,CN*8> pendings("pendings_init","pendings_data");
+sjtu::multiBPT<sjtu::string<20>,QUERY,B,CN*8> orders("orders_init","orders_data");
 void add_train()
 {
     sjtu::string<20> trainID;
@@ -555,11 +556,13 @@ void query_transfer()
                 if(place<tr2.stationNum-2) tcnt+=tr2.stopoverTimes[place];
             }
             l2+=tcnt,r2+=tcnt;
-            int reduced=tr2.travelTimes[place-1];
+            int reduced=0;
             for(int k=place-1;k>=0;k--)
             {
                 l2+=(-tr2.travelTimes[k]),r2+=(-tr2.travelTimes[k]),tcnt-=tr2.travelTimes[k];
                 if(k<tr2.stationNum-2) l2+=(-tr2.stopoverTimes[k]),r2+=(-tr2.stopoverTimes[k]),tcnt-=tr2.stopoverTimes[k];
+                if(k==place-1) reduced+=tr2.travelTimes[k];
+                else reduced+=tr2.travelTimes[k]+tr2.stopoverTimes[k-1];
                 if(hashmap.is(tr2.station[k].hash()))
                 {
                     ar=hashmap.query(tr2.station[k].hash());
@@ -593,7 +596,6 @@ void query_transfer()
                         cost1=tc1,cost2=tc2,time=tm,seatnum1=seat1.min(tmp.stationPlace,r-1),seatnum2=seat2.min(k,place-1);
                     }
                 }
-                if(k) reduced+=tr2.travelTimes[k-1]+tr2.stopoverTimes[k-1];
             }
         }
         hashmap.clear();
@@ -748,8 +750,8 @@ void clean()
 }
 int main()
 {
-    //freopen("test/1.in","r",stdin);
-    //freopen("test/1.ans","w",stdout);
+    freopen("test/6.in","r",stdin);
+    freopen("test/6.ans","w",stdout);
     std::ios::sync_with_stdio(false);
     std::string timestamp,cmd;
     while(std::getline(std::cin,s))
@@ -757,6 +759,10 @@ int main()
         sp=0;
         timestamp=get_word();
         std::cout<<timestamp<<" ";
+        if(timestamp=="[2097696]")
+        {
+            std::cerr<<"debug"<<std::endl;
+        }
         cmd=get_word();
         if(cmd=="add_user") add_user();
         else if(cmd=="login") log_in();
