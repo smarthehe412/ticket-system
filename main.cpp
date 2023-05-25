@@ -14,7 +14,7 @@ g++ main.cpp -o main -g -O2 && ./main <test/1.in >test.1.ans && ./main <test/2.i
 && ./main <test/7.in >test/7.ans && ./main <test/8.in >test/8.ans && ./main <test/9.in >test/9.ans && ./main <test/10.in >test/10.ans 
 */
 const int SUCCESS=0,FAILED=-1;
-const int CN=32;
+const int CN=128;
 struct USER
 {
     sjtu::string<20> username;
