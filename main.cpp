@@ -562,7 +562,7 @@ void query_transfer()
                 l2+=(-tr2.travelTimes[k]),r2+=(-tr2.travelTimes[k]),tcnt-=tr2.travelTimes[k];
                 if(k<tr2.stationNum-2) l2+=(-tr2.stopoverTimes[k]),r2+=(-tr2.stopoverTimes[k]),tcnt-=tr2.stopoverTimes[k];
                 if(k==place-1) reduced+=tr2.travelTimes[k];
-                else reduced+=tr2.travelTimes[k]+tr2.stopoverTimes[k-1];
+                else reduced+=tr2.travelTimes[k]+tr2.stopoverTimes[k];
                 if(hashmap.is(tr2.station[k].hash()))
                 {
                     ar=hashmap.query(tr2.station[k].hash());
